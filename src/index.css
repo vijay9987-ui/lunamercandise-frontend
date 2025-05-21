@@ -1,13 +1,467 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.welcome {
+  background-image: url('https://c0.wallpaperflare.com/preview/951/627/759/women-s-black-dress.jpg');
+  color: white;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+
+::placeholder {
+  color: white;
+  opacity: 1;
+}
+
+.continue {
+  background-color: white;
+  color: black;
+}
+
+.continue:focus {
+  background-color: white;
+  color: black;
+}
+
+.continue:hover {
+  background-color: black;
+  color: white;
+}
+
+::placeholder {
+  color: white;
+  opacity: 1;
+}
+
+input::placeholder {
+  color: white;
+}
+
+.mobile-input {
+  border: none;
+  border-bottom: 1px solid white;
+  background: transparent;
+  color: white;
+  outline: none;
+}
+
+.otp {
+  border: none;
+  border-bottom: 1px solid white;
+  border-radius: 0%;
+  background: transparent;
+  color: white;
+  outline: none;
+}
+
+.mobile-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+
+}
+
+.mobile-input {
+  background: transparent;
+  color: white;
+}
+
+.bg-transparent .input-group-text {
+  border-radius: 0;
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.or-divider hr {
+  flex-grow: 1;
+  border: none;
+  border-top: 2px solid #ccc;
+  margin: 0 10px;
+}
+
+.or-divider span {
+  font-weight: bold;
+  color: #666;
+}
+
+
+/* {.search {
+  width: 544px;
+  height: 56px;
+  top: 305px;
+  left: 442px;
+  border-width: 1px;
+
+}
+
+.search-input {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  border-radius: 20px;
+  color: white;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: white;
+  /*rgba(255, 255, 255, 0.7)
+
+
+.search-input:focus {
+  border-color: white;
+  background: transparent;
+  color: white;
+  outline: none;
+}*/
+
+.card-img-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.category {
+  height: 367px;
+  top: 1569px;
+  left: 74px;
+  border-radius: 10px;
+
+}
+
+.custom-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  display: flex;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar {
+  background-color: transparent;
+  color: black;
+}
+
+.navbar-nav .nav-item .nav-link {
+  font-weight: 500;
+  color: black;
+}
+
+.navbar-nav .nav-item .nav-link:hover {
+  color: #000;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.navbar-toggler {
+  border: none;
+}
+
+.mostwanted {
+  background-image: url('https://img.freepik.com/free-photo/handsome-tourist-straw-hat-put-sunglasses-summer-vacation-standing-blue-background_1258-155167.jpg?t=st=1743060401~exp=1743064001~hmac=098ed718df35c89b724da45666a15947a97c33b5aaa54293a8c60d2530787232&w=1380');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  width: 1279px;
+  height: 550px;
+  top: 147px;
+  left: 74px;
+  border-radius: 10px;
+}
+
+.text1 {
+  width: 438px;
+  height: 32px;
+  top: 446px;
+  left: 100px;
+}
+
+.text2 {
+  font-weight: 50;
+  font-size: 20px;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+
+.wanted {
+  width: 500px;
+  height: 320px;
+  top: 288px;
+  left: 49px;
+  margin-top: 125px;
+  margin-left: 40px;
+  border-radius: 10px;
+
+}
+
+.wanted-blur {
+  background: rgba(255, 255, 255, 0.2);
+  /* Semi-transparent background */
+  backdrop-filter: blur(10px);
+  /* Blur effect */
+  -webkit-backdrop-filter: blur(10px);
+  /* For Safari */
+}
+
+
+.info-icon {
+  display: flex;
+  justify-content: end;
+  align-items: end;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0%;
+  left: 0%;
+  border-radius: var(--bs-card-inner-border-radius);
+}
+
+.icon-style {
+  background-color: #3AB395;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  width: 75px;
+  height: 75px;
+}
+
+
+
+/* Fullscreen modal blur effect */
+.modal {
+  background: transparent !important;
+  /* Fully transparent background */
+  backdrop-filter: blur(20px);
+  /* Strong blur effect */
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Override Bootstrap's default dark overlay */
+.modal-backdrop {
+  background-color: transparent !important;
+  /* Fully transparent */
+  backdrop-filter: blur(20px);
+  /* Applies blur effect to the whole screen */
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Modal content with frosted glass effect */
+.modal-content {
+  background: rgb(225, 225, 225) !important;
+  /* White background with transparency */
+  backdrop-filter: blur(15px);
+  /* Softer blur */
+  -webkit-backdrop-filter: blur(15px);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal header and body text */
+.modal-header,
+.modal-body {
+  color: black;
+  /* White text */
+}
+
+/* Ensuring all text remains readable */
+.modal-body p,
+.modal-body h5 {
+  color: black;
+  /* White text */
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  /* Improves readability */
+}
+
+/* catogory session in dashboard */
+::-webkit-scrollbar {
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 4px;
+}
+
+.custom-scroll {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.custom-scroll::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Profile mywishlist scroolbar */
+.hide-scrollbar {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Logo Animation Container */
+.logo-animation-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  animation: bgFadeOut 1s ease-out 3.5s forwards;
+}
+
+/* Logo Animation Sequence */
+.logo-animation {
+  height: 150px;
+  width: 150px;
+  animation:
+    dotToFullscreen 1s ease-out,
+    drawBack 1s ease-in-out 1s forwards,
+    pulse 0.5s ease-in-out 2s 1,
+    subtleFloat 1s ease-in-out 2.5s infinite;
+  transform-origin: center;
+}
+
+@keyframes dotToFullscreen {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+    border-radius: 50%;
+    background: white;
+  }
+
+  50% {
+    transform: scale(10);
+    opacity: 1;
+    border-radius: 50%;
+    background: white;
+  }
+
+  100% {
+    transform: scale(20);
+    opacity: 1;
+    border-radius: 0;
+    background: transparent;
+    filter: brightness(100);
+  }
+}
+
+@keyframes drawBack {
+  0% {
+    transform: scale(20);
+    opacity: 1;
+    filter: brightness(100);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes subtleFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bgFadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Login Form Animation */
+.login-container {
+  opacity: 0;
+  transform: scale(0.95);
+  animation:
+    fadeIn 0.8s ease-out 3.6s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Logo in login form */
+.login-container img {
+  transition: all 0.3s ease;
+}
+
+.login-container img:hover {
+  transform: rotate(5deg) scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.orders-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.order-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #f9f9f9;
+}
+
+.order-item-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.order-status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
 }
