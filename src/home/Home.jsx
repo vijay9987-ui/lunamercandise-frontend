@@ -193,9 +193,9 @@ const Home = () => {
                                 Level up Your Style With Our Summer Collections
                             </h1>
                             <br />
-                            <a href="/login" className="btn btn-light btn-lg">
+                            <button onClick={()=>navigate('/login')} className="btn btn-light btn-lg">
                                 Login To Shop Now
-                            </a>
+                            </button>
                         </center>
                     </div>
                 </div>
