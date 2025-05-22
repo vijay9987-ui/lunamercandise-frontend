@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Footer from "../views/Footer";
 import Navbar from "../views/Navbar";
 import axios from "axios";
@@ -397,6 +397,56 @@ const Profile = () => {
         html2pdf().set(options).from(element).save();
     };
 
+    const fileInputRef = useRef();
+
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleProfileImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append("profileImage", file);
+
+        try {
+            const endpoint = `https://luna-backend-1.onrender.com/api/users/uploadprofile/${userId}`;
+            const res = await fetch(endpoint, {
+                method: "POST",
+                body: formData,
+                credentials: 'include'
+            });
+
+            if (!res.ok) throw new Error('Upload failed');
+
+            const data = await res.json();
+            console.log("Upload response:", data); // Debug what's returned
+
+            // Handle different possible response formats
+            const imagePath = data.profileImage || data.imageUrl || data.url;
+            if (!imagePath) throw new Error('No image path in response');
+
+            // Construct proper URL based on what's returned
+            const fullImageUrl = imagePath.startsWith('/')
+                ? `https://luna-backend-1.onrender.com${imagePath}`
+                : imagePath;
+
+            // Update both state and session storage
+            const updatedUser = {
+                ...sessionUser,
+                profileImage: fullImageUrl
+            };
+
+            setSessionUser(updatedUser);
+            sessionStorage.setItem("user", JSON.stringify(updatedUser));
+
+        } catch (err) {
+            console.error("Upload error:", err);
+            // Optionally show error to user
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     return (
         <>
@@ -406,12 +456,71 @@ const Profile = () => {
                     {/* Sidebar */}
                     <div className="col-sm-4 p-5 border border-2">
                         <div className="d-flex align-items-center border border-1 p-3 shadow-sm rounded">
-                            <i className="fa-solid fa-user fa-2xl me-3" style={{ color: "#000" }}></i>
+                            {/* Profile Picture + Upload */}
+                            {/* Profile Picture + Upload */}
+                            <div className="me-3 position-relative" style={{ width: "50px", height: "50px" }}>
+                                {isUploading ? (
+                                    <div className="w-100 h-100 d-flex align-items-center justify-content-center">
+                                        <div className="spinner-border spinner-border-sm" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={
+                                            sessionUser.profileImage
+                                                ? sessionUser.profileImage.startsWith('/uploads/')
+                                                    ? `https://luna-backend-1.onrender.com${sessionUser.profileImage}`
+                                                    : sessionUser.profileImage
+                                                : "/default-profile.png"
+                                        }
+                                        alt="Profile"
+                                        style={{
+                                            width: "50px",
+                                            height: "50px",
+                                            borderRadius: "50%",
+                                            objectFit: "cover",
+                                            border: "1px solid #ccc"
+                                        }}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "/default-profile.png";
+                                        }}
+                                    />
+                                )}
+
+                                {/* Pen Icon */}
+                                <i
+                                    className="fa-solid fa-pen position-absolute"
+                                    onClick={() => fileInputRef.current.click()}
+                                    style={{
+                                        bottom: 0,
+                                        right: 0,
+                                        background: "#fff",
+                                        borderRadius: "50%",
+                                        padding: "3px",
+                                        fontSize: "12px",
+                                        cursor: "pointer",
+                                        border: "1px solid #ccc"
+                                    }}
+                                ></i>
+                                {/* Hidden Input */}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    ref={fileInputRef}
+                                    onChange={handleProfileImageChange}
+                                    style={{ display: "none" }}
+                                />
+                            </div>
+
+                            {/* User Info */}
                             <div>
                                 <h4>Hello,</h4>
-                                <p>{sessionUser.username}</p>
+                                <p>{sessionUser.fullName}</p>
                             </div>
-                        </div><br />
+                        </div>
+                        <br />
                         <div className="border border-1 p-3 shadow-sm rounded">
                             <ul className="list-group list-group-flush">
                                 <p className="d-inline-flex align-items-center">
@@ -507,7 +616,7 @@ const Profile = () => {
                                                         <td>
                                                             <div className="text-break">
                                                                 <strong>ID:</strong> {order._id.slice(-6)}
-                                                                <br/>
+                                                                <br />
                                                                 (<small>{new Date(order.createdAt).toLocaleDateString()}</small>)
                                                             </div>
                                                         </td>
@@ -871,7 +980,7 @@ const Profile = () => {
                                                             <h3 className="fw-bold fs-5 mb-1 text-truncate">{product.name}</h3>
                                                             <span className="fw-semibold text-secondary">₹{product.price}</span>
                                                         </div>
-                                                        
+
                                                         {/* Remove Button */}
                                                         <button
                                                             onClick={() => handleRemove(product._id)}
