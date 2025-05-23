@@ -102,6 +102,41 @@ const ProductDetails = ({
 
     if (!selectedItem) return null;
 
+    const handleBuyNow = async() => {
+        if (selectedItem.sizes && !selectedSize) {
+            setError("Please select a size");
+            return;
+        }
+        if (selectedItem.colors && !selectedColor) {
+            setError("Please select a color");
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await axios.post(
+                `https://luna-backend-1.onrender.com/api/users/addtocart/${userId}`,
+                {
+                    productId: selectedItem._id,
+                    action: "increment",
+                    color: selectedColor || undefined,
+                    size: selectedSize || undefined
+                }
+            );
+
+            setSuccess("Product added to cart successfully!");
+            navigate('/dashboard/my-cart');
+        } catch (err) {
+            console.error("Error adding to cart:", err);
+            setError(err.response?.data?.message || "Failed to add product to cart");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     return (
         <div className="container my-4">
             <button className="btn btn-outline-dark mb-3" onClick={goBack}>
@@ -304,7 +339,7 @@ const ProductDetails = ({
                             <div className="d-grid gap-2">
                                 <button
                                     className="btn btn-outline-dark"
-                                    onClick={() => navigate('/dashboard/my-cart')}
+                                    onClick={handleBuyNow}
                                     disabled={
                                         isLoading ||
                                         (selectedItem.sizes && !selectedSize) ||

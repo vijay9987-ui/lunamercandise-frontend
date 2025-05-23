@@ -27,6 +27,7 @@ const Dashboard = () => {
 
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
+    
 
     // Fetch wishlist for the user
     useEffect(() => {
@@ -262,9 +263,9 @@ const Dashboard = () => {
                                 Level up Your Style With Our Summer Collections
                             </h1>
                             <br />
-                            <a href="/dashboard/new-arrivals" className="btn btn-light btn-lg">
+                            <button onClick={()=>navigate('/dashboard/new-arrivals')} className="btn btn-light btn-lg">
                                 Shop Now
-                            </a>
+                            </button>
                         </center>
                     </div>
                 </div>

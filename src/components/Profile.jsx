@@ -6,7 +6,6 @@ import axios from "axios";
 import ProductDetails from "./productDetails";
 import html2pdf from 'html2pdf.js';
 
-
 const Profile = () => {
     const [step, setStep] = useState(2);
     const [isEditing, setIsEditing] = useState(false);
@@ -48,7 +47,6 @@ const Profile = () => {
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
 
-
     // Cart State - Replace your existing cart state with this
     const [cartData, setCartData] = useState({
         cartItems: [],
@@ -60,6 +58,13 @@ const Profile = () => {
         error: null
     });
 
+    // Order Status Tracking State
+    const [trackingData, setTrackingData] = useState({
+        orderId: "",
+        statusHistory: [],
+        loading: false,
+        error: null
+    });
 
     // Fetch cart data
     const fetchCartData = async () => {
@@ -237,7 +242,6 @@ const Profile = () => {
         //sessionStorage.setItem("selectedAddress", JSON.stringify(addr));
     };
 
-
     useEffect(() => {
         const fetchAddresses = async () => {
             try {
@@ -252,7 +256,6 @@ const Profile = () => {
 
         fetchAddresses();
     }, []);
-
 
     const [wishlistProducts, setWishlistProducts] = useState([]);
 
@@ -284,7 +287,6 @@ const Profile = () => {
                 console.error("Failed to fetch wishlist", error);
             }
         };
-
 
         if (userId) {
             fetchWishlist();
@@ -320,7 +322,6 @@ const Profile = () => {
         setQuantity(prevQuantity => prevQuantity + 1);
     };
 
-
     const handlePurchase = (product) => {
         setSelectedItem(product);
         setStep(6);
@@ -338,8 +339,6 @@ const Profile = () => {
     const [ordersLoading, setOrdersLoading] = useState(false);
     const [ordersError, setOrdersError] = useState(null);
 
-
-
     // inside your component:
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
@@ -355,8 +354,6 @@ const Profile = () => {
         setSelectedOrder(null);
         setShowOrderModal(false);
     };
-
-
 
     const fetchOrders = async () => {
         try {
@@ -374,12 +371,43 @@ const Profile = () => {
         }
     };
 
-    useEffect(() => {
-        if (userId && step === 1) {
-            fetchOrders();
+    // Fetch order status history
+    const fetchOrderStatus = async (orderId) => {
+        try {
+            setTrackingData(prev => ({
+                ...prev,
+                loading: true,
+                error: null,
+                orderId
+            }));
+
+            const response = await axios.get(
+                `https://luna-backend-1.onrender.com/api/users/trackstatus/${userId}/${orderId}`
+            );
+
+            setTrackingData(prev => ({
+                ...prev,
+                statusHistory: response.data.statusHistory || [],
+                loading: false
+            }));
+        } catch (error) {
+            console.error("Error fetching order status:", error);
+            setTrackingData(prev => ({
+                ...prev,
+                loading: false,
+                error: error.response?.data?.message || "Failed to load order status"
+            }));
         }
-        if (userId && step === 5) {
-            fetchCartData();
+    };
+
+    useEffect(() => {
+        if (userId) {
+            if (step === 1 || step === 7) {
+                fetchOrders();
+            }
+            if (step === 5) {
+                fetchCartData();
+            }
         }
     }, [userId, step]);
 
@@ -396,53 +424,42 @@ const Profile = () => {
 
         html2pdf().set(options).from(element).save();
     };
-
-    const fileInputRef = useRef();
-
+    const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Load user data
+    useEffect(() => {
+        axios.get(`https://luna-backend-1.onrender.com/api/users/profile/${userId}`)
+            .then((res) => setSessionUser(res.data))
+            .catch((err) => console.error(err));
+    }, [userId]);
+
+    // Handle profile image change
     const handleProfileImageChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setIsUploading(true);
         const formData = new FormData();
         formData.append("profileImage", file);
 
         try {
-            const endpoint = `https://luna-backend-1.onrender.com/api/users/uploadprofile/${userId}`;
-            const res = await fetch(endpoint, {
-                method: "POST",
-                body: formData,
-                credentials: 'include'
-            });
+            setIsUploading(true);
+            const res = await axios.post(
+                `https://luna-backend-1.onrender.com/api/users/uploadprofile/${userId}`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
 
-            if (!res.ok) throw new Error('Upload failed');
-
-            const data = await res.json();
-            console.log("Upload response:", data); // Debug what's returned
-
-            // Handle different possible response formats
-            const imagePath = data.profileImage || data.imageUrl || data.url;
-            if (!imagePath) throw new Error('No image path in response');
-
-            // Construct proper URL based on what's returned
-            const fullImageUrl = imagePath.startsWith('/')
-                ? `https://luna-backend-1.onrender.com${imagePath}`
-                : imagePath;
-
-            // Update both state and session storage
-            const updatedUser = {
-                ...sessionUser,
-                profileImage: fullImageUrl
-            };
-
-            setSessionUser(updatedUser);
-            sessionStorage.setItem("user", JSON.stringify(updatedUser));
+            // Update profile image in state
+            setSessionUser((prev) => ({
+                ...prev,
+                profileImage: res.data.profileImage,
+            }));
 
         } catch (err) {
-            console.error("Upload error:", err);
-            // Optionally show error to user
+            console.error("Upload failed:", err);
         } finally {
             setIsUploading(false);
         }
@@ -457,7 +474,6 @@ const Profile = () => {
                     <div className="col-sm-4 p-5 border border-2">
                         <div className="d-flex align-items-center border border-1 p-3 shadow-sm rounded">
                             {/* Profile Picture + Upload */}
-                            {/* Profile Picture + Upload */}
                             <div className="me-3 position-relative" style={{ width: "50px", height: "50px" }}>
                                 {isUploading ? (
                                     <div className="w-100 h-100 d-flex align-items-center justify-content-center">
@@ -468,11 +484,9 @@ const Profile = () => {
                                 ) : (
                                     <img
                                         src={
-                                            sessionUser.profileImage
-                                                ? sessionUser.profileImage.startsWith('/uploads/')
-                                                    ? `https://luna-backend-1.onrender.com${sessionUser.profileImage}`
-                                                    : sessionUser.profileImage
-                                                : "/default-profile.png"
+                                            sessionUser.profileImage?.startsWith("/uploads/")
+                                                ? `https://luna-backend-1.onrender.com${sessionUser.profileImage}`
+                                                : sessionUser.profileImage || "/default-profile.png"
                                         }
                                         alt="Profile"
                                         style={{
@@ -480,7 +494,7 @@ const Profile = () => {
                                             height: "50px",
                                             borderRadius: "50%",
                                             objectFit: "cover",
-                                            border: "1px solid #ccc"
+                                            border: "1px solid #ccc",
                                         }}
                                         onError={(e) => {
                                             e.target.onerror = null;
@@ -489,7 +503,7 @@ const Profile = () => {
                                     />
                                 )}
 
-                                {/* Pen Icon */}
+                                {/* Edit Icon */}
                                 <i
                                     className="fa-solid fa-pen position-absolute"
                                     onClick={() => fileInputRef.current.click()}
@@ -501,10 +515,11 @@ const Profile = () => {
                                         padding: "3px",
                                         fontSize: "12px",
                                         cursor: "pointer",
-                                        border: "1px solid #ccc"
+                                        border: "1px solid #ccc",
                                     }}
                                 ></i>
-                                {/* Hidden Input */}
+
+                                {/* Hidden File Input */}
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -520,6 +535,7 @@ const Profile = () => {
                                 <p>{sessionUser.fullName}</p>
                             </div>
                         </div>
+
                         <br />
                         <div className="border border-1 p-3 shadow-sm rounded">
                             <ul className="list-group list-group-flush">
@@ -543,6 +559,12 @@ const Profile = () => {
                                     </a>
                                 </p>
                                 <p className="d-inline-flex align-items-center">
+                                    <i className="fa-solid fa-truck-fast me-2"></i>
+                                    <a className="btn" style={{ cursor: "pointer", color: "black" }} onClick={() => setStep(7)}>
+                                        Track Order
+                                    </a>
+                                </p>
+                                <p className="d-inline-flex align-items-center">
                                     <i className="fa-regular fa-user me-2"></i>
                                     <a className="btn" data-bs-toggle="collapse" href="#collapsesettings" style={{ cursor: "pointer", color: "black" }} onClick={() => setStep(2)}>Account Settings</a>
                                 </p>
@@ -562,11 +584,7 @@ const Profile = () => {
                                         >
                                             Manage Address
                                         </li>
-                                        {/* {<li className="px-4 py-2">
-                                            Notifications
-                                        </li>} */}
                                     </ul>
-
                                 </div>
                                 <p className="d-inline-flex align-items-center" style={{ cursor: "pointer" }}>
                                     <i className="fa-solid fa-arrow-right-from-bracket me-2"></i>
@@ -667,7 +685,6 @@ const Profile = () => {
                                                             >
                                                                 View Details
                                                             </button>
-
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -677,6 +694,7 @@ const Profile = () => {
                                 )}
                             </div>
                         )}
+
 
 
                         {showOrderModal && selectedOrder && (
@@ -768,16 +786,13 @@ const Profile = () => {
                             </div>
                         )}
 
-
-
-
                         {step === 2 && (
                             <form className="p-4 border rounded shadow-sm">
                                 <div className="d-flex justify-content-between mb-3">
                                     <h4 className="text-dark">Profile Information</h4>
                                     <button
                                         type="button"
-                                        className={`btn btn-sm ${isEditing ? "btn-dark" : "btn-outline-dark"}`}
+                                        className={`btn btn-sm ${isEditing ? "btn-dark" : "btn-dark"}`}
                                         onClick={isEditing ? handleUpdate : () => setIsEditing(true)}
                                     >
                                         {isEditing ? "Save" : "Edit"}
@@ -853,7 +868,6 @@ const Profile = () => {
                             </form>
                         )}
 
-
                         {step === 3 && (
                             <>
                                 <h5>Manage Delivery Address</h5>
@@ -876,7 +890,6 @@ const Profile = () => {
                                         </button>
                                     </div>
                                 )) : <p>No saved addresses.</p>}
-
 
                                 <button className="btn btn-outline-dark mt-2" onClick={() => setShowAddressForm(true)}>Add New Address</button>
 
@@ -947,7 +960,6 @@ const Profile = () => {
                                             <button type="submit" className="btn btn-success">Save Address</button>
                                         </div>
                                     </form>
-
                                 )}
                             </>
                         )}
@@ -963,7 +975,6 @@ const Profile = () => {
                                                 <div
                                                     key={product._id || `wishlist-${index}`}
                                                     className="position-relative border mb-3 shadow-sm p-2 rounded"
-
                                                 >
                                                     <div className="d-flex flex-column flex-sm-row align-items-start">
                                                         {/* Product Image */}
@@ -998,7 +1009,6 @@ const Profile = () => {
                                         )}
                                     </div>
                                 </div>
-
                             </>
                         )}
 
@@ -1011,11 +1021,11 @@ const Profile = () => {
                                             <table className="table table-bordered align-middle text-center text-dark">
                                                 <thead>
                                                     <tr>
-                                                        <th>Image</th>
-                                                        <th>Product</th>
-                                                        <th>Quantity</th>
-                                                        <th>Total</th>
-                                                        <th>Action</th>
+                                                        <th className="bg-dark text-light">Image</th>
+                                                        <th className="bg-dark text-light">Product</th>
+                                                        <th className="bg-dark text-light">Quantity</th>
+                                                        <th className="bg-dark text-light">Total</th>
+                                                        <th className="bg-dark text-light">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1110,7 +1120,6 @@ const Profile = () => {
                             </div>
                         )}
 
-
                         {step === 6 && (
                             <ProductDetails
                                 selectedItem={selectedItem}
@@ -1122,6 +1131,209 @@ const Profile = () => {
                             />
                         )}
 
+                        {step === 7 && (
+                            <div className="container my-4">
+                                <h3 className="mb-4 text-center text-md-start">Track Your Orders</h3>
+
+                                {ordersLoading ? (
+                                    <div className="text-center py-4">
+                                        <div className="spinner-border text-primary" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p className="mt-2">Loading your orders...</p>
+                                    </div>
+                                ) : ordersError ? (
+                                    <div className="alert alert-danger">{ordersError}</div>
+                                ) : orders.length === 0 ? (
+                                    <div className="text-center py-4">
+                                        <p>You haven't placed any orders yet.</p>
+                                        <button className="btn btn-outline-dark" onClick={() => navigate('/dashboard')}>
+                                            Start Shopping
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="table-responsive border border-1 mb-4">
+                                            <table className="table table-hover align-middle">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Order ID</th>
+                                                        <th scope="col">Date</th>
+                                                        <th scope="col">Total</th>
+                                                        <th scope="col">Status</th>
+                                                        <th scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {orders.map(order => (
+                                                        <tr key={order._id}>
+                                                            <td>
+                                                                <div className="text-break">
+                                                                    {order._id.slice(-8)}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                {new Date(order.createdAt).toLocaleDateString()}
+                                                            </td>
+                                                            <td>
+                                                                ₹{order.totalAmount.toFixed(2)}
+                                                            </td>
+                                                            <td>
+                                                                <span className={`badge ${order.orderStatus === 'Delivered' ? 'bg-success' :
+                                                                    order.orderStatus === 'Cancelled' ? 'bg-danger' :
+                                                                        order.orderStatus === 'Cancel request' ? 'bg-warning' :
+                                                                            order.orderStatus === 'Shipped' ? 'bg-primary' :
+                                                                                order.orderStatus === 'Confirmed' ? 'bg-info' :
+                                                                                    'bg-secondary' // Pending
+                                                                    }`}>
+                                                                    {order.orderStatus}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-dark"
+                                                                    onClick={() => {
+                                                                        setTrackingData(prev => ({
+                                                                            ...prev,
+                                                                            orderId: order._id
+                                                                        }));
+                                                                        fetchOrderStatus(order._id);
+                                                                    }}
+                                                                    disabled={trackingData.loading}
+                                                                >
+                                                                    {trackingData.loading && trackingData.orderId === order._id ? (
+                                                                        <span className="spinner-border spinner-border-sm me-1"></span>
+                                                                    ) : null}
+                                                                    Track Order
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {trackingData.orderId && (
+                                            <div className="card mb-4 border-dark">
+                                                <div className="card-header bg-dark text-white">
+                                                    <h5 className="mb-0">
+                                                        Order Tracking: {trackingData.orderId.slice(-8)}
+                                                        {trackingData.loading && (
+                                                            <span className="spinner-border spinner-border-sm ms-2"></span>
+                                                        )}
+                                                    </h5>
+                                                </div>
+                                                <div className="card-body">
+                                                    {trackingData.error ? (
+                                                        <div className="alert alert-danger">
+                                                            {trackingData.error}
+                                                        </div>
+                                                    ) : trackingData.statusHistory.length > 0 ? (
+                                                        <div className="timeline">
+                                                            {trackingData.statusHistory.map((status, index) => (
+                                                                <div key={index} className="timeline-item mb-3">
+                                                                    <div className="d-flex">
+                                                                        <div className="timeline-badge">
+                                                                            <i className={`fas ${status.status === 'Delivered' ? 'fa-check-circle text-success' :
+                                                                                status.status === 'Shipped' ? 'fa-truck text-primary' :
+                                                                                    status.status === 'Confirmed' ? 'fa-check text-info' :
+                                                                                        status.status === 'Cancel request' ? 'fa-question-circle text-warning' :
+                                                                                            status.status === 'Cancelled' ? 'fa-times-circle text-danger' :
+                                                                                                'fa-hourglass-half text-secondary' // Pending
+                                                                                }`}></i>
+                                                                        </div>
+                                                                        <div className="timeline-content ms-3">
+                                                                            <h6 className="mb-1">{status.status}</h6>
+                                                                            <p className="text-muted mb-1">
+                                                                                {new Date(status.timestamp).toLocaleString()}
+                                                                            </p>
+                                                                            {status.message && (
+                                                                                <p className="mb-0">{status.message}</p>
+                                                                            )}
+                                                                            {status.status === 'Cancel request' && (
+                                                                                <div className="mt-2">
+                                                                                    <button className="btn btn-sm btn-danger me-2">
+                                                                                        Confirm Cancellation
+                                                                                    </button>
+                                                                                    <button className="btn btn-sm btn-outline-secondary">
+                                                                                        Cancel Request
+                                                                                    </button>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-3">
+                                                            {trackingData.loading ? (
+                                                                <p>Loading tracking information...</p>
+                                                            ) : (
+                                                                <p>No tracking information available for this order.</p>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="card border-dark">
+                                            <div className="card-body">
+                                                <h5 className="card-title">Order Status Guide</h5>
+                                                <div className="row">
+                                                    <div className="col-md-6">
+                                                        <ul className="list-group list-group-flush">
+                                                            <li className="list-group-item d-flex align-items-center">
+                                                                <span className="badge bg-secondary me-2">Pending</span>
+                                                                <span>Your order is being processed</span>
+                                                            </li>
+                                                            <li className="list-group-item d-flex align-items-center">
+                                                                <span className="badge bg-info me-2">Confirmed</span>
+                                                                <span>Order confirmed by seller</span>
+                                                            </li>
+                                                            <li className="list-group-item d-flex align-items-center">
+                                                                <span className="badge bg-primary me-2">Shipped</span>
+                                                                <span>Order has been dispatched</span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                    <div className="col-md-6">
+                                                        <ul className="list-group list-group-flush">
+                                                            <li className="list-group-item d-flex align-items-center">
+                                                                <span className="badge bg-success me-2">Delivered</span>
+                                                                <span>Order delivered successfully</span>
+                                                            </li>
+                                                            <li className="list-group-item d-flex align-items-center">
+                                                                <span className="badge bg-warning me-2">Cancel request</span>
+                                                                <span>Cancellation requested</span>
+                                                            </li>
+                                                            <li className="list-group-item d-flex align-items-center">
+                                                                <span className="badge bg-danger me-2">Cancelled</span>
+                                                                <span>Order has been cancelled</span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="card mt-4 border-dark">
+                                            <div className="card-body">
+                                                <h5 className="card-title">Need Help?</h5>
+                                                <p className="card-text">
+                                                    If you're having trouble tracking your order or have any questions,
+                                                    please contact our customer support team.
+                                                </p>
+                                                <button className="btn btn-outline-dark">
+                                                    <i className="fas fa-headset me-2"></i>Contact Support
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

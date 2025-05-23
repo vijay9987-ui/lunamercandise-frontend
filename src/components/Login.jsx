@@ -69,10 +69,11 @@ const Login = () => {
             // Store complete user data in sessionStorage
             sessionStorage.setItem("user", JSON.stringify({
                 userId: data.user._id,
-                username: data.user.fullName,
+                fullName: data.user.fullName,
                 mobileNumber: data.user.mobileNumber,
                 email: data.user.email,
                 token: data.token,
+                profileImage: data.user.profileImage,
                 createdAt: data.user.createdAt
             }));
 
