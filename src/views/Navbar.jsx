@@ -1,31 +1,34 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useCart } from '../components/CartContext';
 
 
 function Navbar() {
   const navigate = useNavigate();
+
+  const { cartCount } = useCart();
   
 
-  const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
-  const userId = storedUser.userId;
+  // const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
+  // const userId = storedUser.userId;
 
-  const [cartCount, setCartCount] = useState(0);
+  // const [cartCount, setCartCount] = useState(0);
 
-  useEffect(() => {
-    const fetchCartCount = async () => {
-      try {
-        const response = await axios.get(`https://luna-backend-1.onrender.com/api/users/getcartcount/${userId}`);
-        setCartCount(response.data.cartCount);
-      } catch (error) {
-        console.error("Error fetching cart count:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchCartCount = async () => {
+  //     try {
+  //       const response = await axios.get(`https://luna-backend-1.onrender.com/api/users/getcartcount/${userId}`);
+  //       setCartCount(response.data.cartCount);
+  //     } catch (error) {
+  //       console.error("Error fetching cart count:", error);
+  //     }
+  //   };
 
-    if (userId) {
-      fetchCartCount();
-    }
-  }, [userId]);
+  //   if (userId) {
+  //     fetchCartCount();
+  //   }
+  // }, [userId]);
 
   return (
     <>

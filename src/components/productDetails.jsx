@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from './CartContext';
 
 const ProductDetails = ({
     selectedItem,
@@ -16,6 +17,8 @@ const ProductDetails = ({
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [isInWishlist, setIsInWishlist] = useState(false);
+
+    const { fetchCartCount } = useCart();
 
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
@@ -98,6 +101,7 @@ const ProductDetails = ({
                 }
             );
             setSuccess("Product added to cart successfully!");
+            fetchCartCount();
         } catch (err) {
             console.error("Error adding to cart:", err);
             setError(err.response?.data?.message || "Failed to add product to cart");

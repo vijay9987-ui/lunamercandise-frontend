@@ -799,7 +799,7 @@ const Profile = () => {
 
 
                         {showOrderModal && selectedOrder && (
-                            <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
+                            <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "white" }}>
                                 <div className="modal-dialog modal-lg modal-dialog-centered">
                                     <div className="modal-content border border-light" id="order-details-pdf">
                                         <div className="modal-header text-light bg-dark">
@@ -939,6 +939,7 @@ const Profile = () => {
                                         <option value="none" disabled>Select Gender</option>
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
+                                        <option value="other">Other</option>
                                     </select>
                                 </div>
 
@@ -1351,7 +1352,7 @@ const Profile = () => {
                                                                             {status.message && (
                                                                                 <p className="mb-0">{status.message}</p>
                                                                             )}
-                                                                            {status.status === 'Cancel request' && (
+                                                                            {/* {status.status === 'Cancel request' && (
                                                                                 <div className="mt-2">
                                                                                     <button className="btn btn-sm btn-danger me-2">
                                                                                         Confirm Cancellation
@@ -1360,7 +1361,7 @@ const Profile = () => {
                                                                                         Cancel Request
                                                                                     </button>
                                                                                 </div>
-                                                                            )}
+                                                                            )} */}
                                                                         </div>
                                                                     </div>
                                                                 </div>
