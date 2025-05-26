@@ -5,19 +5,12 @@ import UserFooter from "./UserFooter";
 import UserProductDetails from "./UserProductDetails";
 import axios from "axios";
 
-
 const Home = () => {
     const navigate = useNavigate();
 
-    const images = [
-        "https://img.freepik.com/free-photo/young-woman-with-shopping-bags-beautiful-dress_1303-17550.jpg?ga=GA1.1.2026462327.1743072904&semt=ais_hybrid&w=740",
-        "https://img.freepik.com/free-photo/joyful-european-lady-summer-hat-dancing-yellow-background-debonair-girl-long-skirt-laughing-while-posing-studio_197531-25996.jpg?ga=GA1.1.2026462327.1743072904&semt=ais_hybrid&w=740",
-        "https://img.freepik.com/free-photo/happy-lady-stylish-skirt-boater-posing-pink-wall_197531-23653.jpg?ga=GA1.1.2026462327.1743072904&semt=ais_hybrid&w=740",
-    ];
-
+    const [banners, setBanners] = useState([]);
     const [categories, setCategories] = useState([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    
     const [newArrivalsProducts, setNewArrivalsProducts] = useState([]);
     const [mostWantedProducts, setMostWantedProducts] = useState([]);
     const [step, setStep] = useState(1);
@@ -26,16 +19,47 @@ const Home = () => {
     const [cart, setCart] = useState([]);
     const [wishlist, setWishlist] = useState([]);
 
+    const [isTransitioning, setIsTransitioning] = useState(false);
+
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
 
+    // Fetch banners
+    useEffect(() => {
+        const fetchBanners = async () => {
+            try {
+                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/getbanners");
+                const bannerImages = response.data.banners[0]?.images || [];
+                setBanners(bannerImages);
+            } catch (error) {
+                console.error("Error fetching banners:", error);
+            }
+        };
+        fetchBanners();
+    }, []);
+
+    // Banner image transition effect
+    useEffect(() => {
+        if (banners.length > 1) {
+            const interval = setInterval(() => {
+                setIsTransitioning(true);
+                setTimeout(() => {
+                    setCurrentImageIndex((prevIndex) => 
+                        prevIndex === banners.length - 1 ? 0 : prevIndex + 1
+                    );
+                    setIsTransitioning(false);
+                }, 500); // Transition duration
+            }, 5000); // Change image every 5 seconds
+
+            return () => clearInterval(interval);
+        }
+    }, [banners]);
 
     // Fetch products
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                // Fetch all products in parallel
-                const [newArrivalsResponse, bestSellersResponse, productsResponse] = await Promise.all([
+                const [newArrivalsResponse, bestSellersResponse] = await Promise.all([
                     axios.get("https://luna-backend-1.onrender.com/api/products/new-arrivals"),
                     axios.get("https://luna-backend-1.onrender.com/api/products/best-sellers")
                 ]);
@@ -48,9 +72,6 @@ const Home = () => {
         };
         fetchProducts();
     }, []);
-
-
-
 
     // Fetch categories
     useEffect(() => {
@@ -81,7 +102,6 @@ const Home = () => {
     };
 
     const handleCategoryClick = (categoryName) => {
-        // No need to manually encode - React Router v6 handles this automatically
         navigate(`/usercategory/${categoryName}`);
     };
 
@@ -96,6 +116,21 @@ const Home = () => {
             const updatedCart = [...cart, newItem];
             setCart(updatedCart);
             navigate('/dashboard/my-cart', { state: { cart: updatedCart } });
+        }
+    };
+
+    // Scroll handlers for horizontal sections
+    const scrollLeft = (sectionId) => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollBy({ left: -300, behavior: 'smooth' });
+        }
+    };
+
+    const scrollRight = (sectionId) => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollBy({ left: 300, behavior: 'smooth' });
         }
     };
 
@@ -141,7 +176,6 @@ const Home = () => {
                             zIndex: 10,
                             cursor: "pointer",
                         }}
-                        
                     >
                         <i
                             className={`fa-heart fa-2xl ${isInWishlist ? "fa-solid" : "fa-regular"}`}
@@ -172,41 +206,49 @@ const Home = () => {
         <>
             <UserNavbar />
             <div className="container d-flex justify-content-center">
-                <div className="card text-bg-dark position-relative w-100">
-                    <img
-                        src={images[currentImageIndex]}
-                        className="card-img img-fluid"
-                        alt="Latest Fashion"
-                    />
-                    <div
-                        className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center"
-                        style={{
-                            backdropFilter: "blur(8px)",
-                            background: "rgba(0, 0, 0, 0.4)",
-                            borderRadius: "10px",
-                            padding: "20px",
-                            transition: "background-image 1s ease-in-out",
-                        }}
-                    >
-                        <center>
+                {banners.length > 0 && (
+                    <div className="card text-bg-dark position-relative w-100 overflow-hidden" style={{ height: '600px' }}>
+                        <img
+                            src={`https://luna-backend-1.onrender.com${banners[currentImageIndex]}`}
+                            className="img-fluid w-100 h-100 position-absolute top-0 start-0"
+                            alt="Banner"
+                            style={{
+                                objectFit: "cover",
+                                opacity: isTransitioning ? 0 : 1,
+                                transition: "opacity 0.5s ease-in-out",
+                                zIndex: 1
+                            }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://via.placeholder.com/800x500?text=Image+Not+Available";
+                            }}
+                        />
+
+                        <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center"
+                            style={{
+                                backdropFilter: "blur(8px)",
+                                background: "rgba(0, 0, 0, 0.4)",
+                                borderRadius: "10px",
+                                padding: "20px",
+                                zIndex: 3,
+                            }}
+                        >
                             <h1 className="text-light text-wrap text-center px-3" style={{ fontSize: "clamp(1.5rem, 5vw, 3rem)" }}>
                                 Level up Your Style With Our Summer Collections
                             </h1>
                             <br />
-                            <button onClick={()=>navigate('/login')} className="btn btn-light btn-lg">
+                            <button onClick={() => navigate('/login')} className="btn btn-light btn-lg">
                                 Login To Shop Now
                             </button>
-                        </center>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <br />
 
-
             {step === 1 && (
                 <>
-
                     {/* Category Section */}
                     <div className="container">
                         <div className="row align-items-center text-center text-md-start">
@@ -219,49 +261,65 @@ const Home = () => {
 
                     <br /><br />
 
-                    <div
-                        className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                        style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                    >
-                        {categories.map((category, index) => (
-                            <div
-                                key={index}
-                                className="card bg-dark text-white shadow-sm overflow-hidden flex-shrink-0 mx-3 position-relative"
-                                style={{
-                                    width: "16rem",
-                                    height: "11rem",
-                                    scrollSnapAlign: "center",
-                                    cursor: "pointer",
-                                    borderRadius: "1rem",
-                                    transition: "transform 0.3s",
-                                    overflow: "hidden",
-                                }}
-                                onClick={() => handleCategoryClick(category.categoryName)}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = "scale(1.05)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = "scale(1)";
-                                }}
-                            >
-                                <img
-                                    src={category.imageUrl}
-                                    className="w-100 h-100"
-                                    alt={`${category.categoryName} Image`}
+                    <div className="position-relative">
+                        <button
+                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
+                            onClick={() => scrollLeft('categories-section')}
+                            style={{ width: '40px', height: '40px' }}
+                        >
+                            <i className="fas fa-chevron-left"></i>
+                        </button>
+                        <div
+                            id="categories-section"
+                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                        >
+                            {categories.map((category, index) => (
+                                <div
+                                    key={index}
+                                    className="card bg-dark text-white shadow-sm overflow-hidden flex-shrink-0 mx-3 position-relative"
                                     style={{
-                                        objectFit: "cover",
-                                        filter: "brightness(60%)",
+                                        width: "16rem",
+                                        height: "11rem",
+                                        scrollSnapAlign: "center",
+                                        cursor: "pointer",
+                                        borderRadius: "1rem",
+                                        transition: "transform 0.3s",
+                                        overflow: "hidden",
                                     }}
-                                />
-                                <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center">
-                                    <h5 className="fw-bold text-white mb-2" style={{ textShadow: "1px 1px 5px rgba(0,0,0,0.7)" }}>
-                                        {category.categoryName}
-                                    </h5>
+                                    onClick={() => handleCategoryClick(category.categoryName)}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = "scale(1.05)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = "scale(1)";
+                                    }}
+                                >
+                                    <img
+                                        src={category.imageUrl}
+                                        className="w-100 h-100"
+                                        alt={`${category.categoryName} Image`}
+                                        style={{
+                                            objectFit: "cover",
+                                            filter: "brightness(60%)",
+                                        }}
+                                    />
+                                    <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center">
+                                        <h5 className="fw-bold text-white mb-2" style={{ textShadow: "1px 1px 5px rgba(0,0,0,0.7)" }}>
+                                            {category.categoryName}
+                                        </h5>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                        <button
+                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
+                            onClick={() => scrollRight('categories-section')}
+                            style={{ width: '40px', height: '40px' }}
+                        >
+                            <i className="fas fa-chevron-right"></i>
+                        </button>
                     </div>
-
 
                     <br />
 
@@ -276,8 +334,28 @@ const Home = () => {
                     </div>
                     <br /><br />
 
-                    <div className="d-flex overflow-auto py-2 mx-5 custom-scroll" style={{ gap: "1rem", scrollSnapType: "x mandatory" }}>
-                        {mostWantedProducts.map(renderProductCard)}
+                    <div className="position-relative">
+                        <button
+                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
+                            onClick={() => scrollLeft('best-sellers-section')}
+                            style={{ width: '40px', height: '40px' }}
+                        >
+                            <i className="fas fa-chevron-left"></i>
+                        </button>
+                        <div
+                            id="best-sellers-section"
+                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                        >
+                            {mostWantedProducts.map(renderProductCard)}
+                        </div>
+                        <button
+                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
+                            onClick={() => scrollRight('best-sellers-section')}
+                            style={{ width: '40px', height: '40px' }}
+                        >
+                            <i className="fas fa-chevron-right"></i>
+                        </button>
                     </div>
 
                     <br />
@@ -293,10 +371,29 @@ const Home = () => {
                     </div>
                     <br /><br />
 
-                    <div className="d-flex overflow-auto py-2 mx-5 custom-scroll" style={{ gap: "1rem", scrollSnapType: "x mandatory" }}>
-                        {newArrivalsProducts.map(renderProductCard)}
+                    <div className="position-relative">
+                        <button
+                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
+                            onClick={() => scrollLeft('new-arrivals-section')}
+                            style={{ width: '40px', height: '40px' }}
+                        >
+                            <i className="fas fa-chevron-left"></i>
+                        </button>
+                        <div
+                            id="new-arrivals-section"
+                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                        >
+                            {newArrivalsProducts.map(renderProductCard)}
+                        </div>
+                        <button
+                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
+                            onClick={() => scrollRight('new-arrivals-section')}
+                            style={{ width: '40px', height: '40px' }}
+                        >
+                            <i className="fas fa-chevron-right"></i>
+                        </button>
                     </div>
-
                 </>
             )}
 
@@ -310,7 +407,6 @@ const Home = () => {
                     goBack={() => setStep(1)}
                 />
             )}
-
 
             <UserFooter />
         </>

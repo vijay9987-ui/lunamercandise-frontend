@@ -196,7 +196,7 @@ const Profile = () => {
                 sessionStorage.setItem("user", JSON.stringify(storedUser));
             }
 
-            setTimeout(() => setMessage("Mobile number changed Successfully"), 3000);
+            // setTimeout(() => setMessage("ProfileData changed Successfully"), 3000);
         } catch (err) {
             console.error("Error updating profile:", err);
         }
@@ -429,9 +429,27 @@ const Profile = () => {
 
     // Load user data
     useEffect(() => {
-        axios.get(`https://luna-backend-1.onrender.com/api/users/profile/${userId}`)
-            .then((res) => setSessionUser(res.data))
-            .catch((err) => console.error(err));
+        if (userId) {
+            axios.get(`https://luna-backend-1.onrender.com/api/users/profile/${userId}`)
+                .then((res) => {
+                    setSessionUser(res.data);
+                    // Set default profile image if none exists
+                    if (!res.data.profileImage) {
+                        setSessionUser(prev => ({
+                            ...prev,
+                            profileImage: "/default-profile.png"
+                        }));
+                    }
+                })
+                .catch((err) => {
+                    console.error(err);
+                    // Set default profile image on error
+                    setSessionUser(prev => ({
+                        ...prev,
+                        profileImage: "/default-profile.png"
+                    }));
+                });
+        }
     }, [userId]);
 
     // Handle profile image change
@@ -458,11 +476,33 @@ const Profile = () => {
                 profileImage: res.data.profileImage,
             }));
 
+            // Update in session storage
+            const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
+            storedUser.profileImage = res.data.profileImage;
+            sessionStorage.setItem("user", JSON.stringify(storedUser));
+
         } catch (err) {
             console.error("Upload failed:", err);
         } finally {
             setIsUploading(false);
         }
+    };
+
+    // Function to get profile image URL
+    const getProfileImageUrl = () => {
+        if (!sessionUser.profileImage) {
+            return "/default-profile.png";
+        }
+
+        if (sessionUser.profileImage.startsWith("http")) {
+            return sessionUser.profileImage;
+        }
+
+        if (sessionUser.profileImage.startsWith("/uploads/")) {
+            return `https://luna-backend-1.onrender.com${sessionUser.profileImage}`;
+        }
+
+        return sessionUser.profileImage;
     };
 
     return (
@@ -483,11 +523,7 @@ const Profile = () => {
                                     </div>
                                 ) : (
                                     <img
-                                        src={
-                                            sessionUser.profileImage?.startsWith("/uploads/")
-                                                ? `https://luna-backend-1.onrender.com${sessionUser.profileImage}`
-                                                : sessionUser.profileImage || "/default-profile.png"
-                                        }
+                                        src={getProfileImageUrl()}
                                         alt="Profile"
                                         style={{
                                             width: "50px",
@@ -532,7 +568,7 @@ const Profile = () => {
                             {/* User Info */}
                             <div>
                                 <h4>Hello,</h4>
-                                <p>{sessionUser.fullName}</p>
+                                <p>{sessionUser.fullName || sessionUser.username || "User"}</p>
                             </div>
                         </div>
 
@@ -1278,7 +1314,7 @@ const Profile = () => {
                                             </div>
                                         )}
 
-                                        <div className="card border-dark">
+                                        {/* <div className="card border-dark">
                                             <div className="card-body">
                                                 <h5 className="card-title">Order Status Guide</h5>
                                                 <div className="row">
@@ -1329,7 +1365,7 @@ const Profile = () => {
                                                     <i className="fas fa-headset me-2"></i>Contact Support
                                                 </button>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </>
                                 )}
                             </div>

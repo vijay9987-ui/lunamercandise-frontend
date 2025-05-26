@@ -13,6 +13,7 @@ const Login = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showLogo, setShowLogo] = useState(true);
     const [showLogin, setShowLogin] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const navigate = useNavigate();
 
@@ -33,11 +34,13 @@ const Login = () => {
         let value = e.target.value.replace(/\D/g, "");
         setMobileNumber(value);
         setError("");
+        setIsSuccess(false);
     };
 
     const handlePasswordChange = (e) => {
         setPassword(e.target.value);
         setError("");
+        setIsSuccess(false);
     };
 
     const handleLoginSubmit = async (e) => {
@@ -45,11 +48,13 @@ const Login = () => {
 
         if (mobileNumber.length !== 10) {
             setError("Enter a valid 10-digit mobile number");
+            setIsSuccess(false);
             return;
         }
 
         if (!password || password.length < 6) {
             setError("Password must be at least 6 characters");
+            setIsSuccess(false);
             return;
         }
 
@@ -80,6 +85,7 @@ const Login = () => {
             navigate("/dashboard");
         } catch (err) {
             setError(err.message);
+            setIsSuccess(false);
         }
     };
 
@@ -88,26 +94,31 @@ const Login = () => {
 
         if (!fullName.trim()) {
             setError("Full name is required");
+            setIsSuccess(false);
             return;
         }
 
         if (mobileNumber.length !== 10) {
             setError("Enter a valid 10-digit mobile number");
+            setIsSuccess(false);
             return;
         }
 
         if (!email.includes("@") || !email.includes(".")) {
             setError("Enter a valid email address");
+            setIsSuccess(false);
             return;
         }
 
         if (registerPassword.length < 6) {
             setError("Password must be at least 6 characters");
+            setIsSuccess(false);
             return;
         }
 
         if (registerPassword !== confirmPassword) {
             setError("Passwords do not match");
+            setIsSuccess(false);
             return;
         }
 
@@ -130,7 +141,7 @@ const Login = () => {
                 throw new Error(data.error || "Registration failed");
             }
 
-            // ✅ Reset form and return to login step
+            // Reset form and return to login step
             setStep(1);
             setMobileNumber("");
             setPassword("");
@@ -139,13 +150,14 @@ const Login = () => {
             setRegisterPassword("");
             setConfirmPassword("");
 
-            // ✅ Show success message
+            // Show success message
             setError("Registration successful. Please log in.");
+            setIsSuccess(true);
         } catch (err) {
             setError(err.message);
+            setIsSuccess(false);
         }
     };
-
 
     return (
         <div className="d-flex align-items-center justify-content-center vh-100 text-white welcome">
@@ -188,12 +200,16 @@ const Login = () => {
                                 style={{ background: "transparent", color: "white" }}
                             />
 
-                            {error && <p className="text-danger">{error}</p>}
+                            {error && (
+                                <div className={`alert ${isSuccess ? 'alert-success' : 'alert-danger'}`} role="alert">
+                                    {error}
+                                </div>
+                            )}
 
                             <button type="submit" className="btn w-100 mt-3 continue">Login</button>
 
                             <div className="mt-3">
-                                <p>Don't have an account? <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => { setStep(2); setError(""); }}>Register here</span></p>
+                                <p>Don't have an account? <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => { setStep(2); setError(""); setIsSuccess(false); }}>Register here</span></p>
                             </div>
                         </form>
                     ) : (
@@ -207,7 +223,7 @@ const Login = () => {
                                 className="form-control mb-2 mobile-input"
                                 placeholder="Enter your full name"
                                 value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
+                                onChange={(e) => { setFullName(e.target.value); setError(""); setIsSuccess(false); }}
                                 style={{ background: "transparent", color: "white" }}
                             />
 
@@ -231,7 +247,7 @@ const Login = () => {
                                 className="form-control mb-2 mobile-input"
                                 placeholder="Email address"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => { setEmail(e.target.value); setError(""); setIsSuccess(false); }}
                                 style={{ background: "transparent", color: "white" }}
                             />
 
@@ -241,7 +257,7 @@ const Login = () => {
                                 className="form-control mb-2 mobile-input"
                                 placeholder="Create password"
                                 value={registerPassword}
-                                onChange={(e) => setRegisterPassword(e.target.value)}
+                                onChange={(e) => { setRegisterPassword(e.target.value); setError(""); setIsSuccess(false); }}
                                 style={{ background: "transparent", color: "white" }}
                             />
 
@@ -251,11 +267,15 @@ const Login = () => {
                                 className="form-control mb-2 mobile-input"
                                 placeholder="Confirm password"
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e) => { setConfirmPassword(e.target.value); setError(""); setIsSuccess(false); }}
                                 style={{ background: "transparent", color: "white" }}
                             />
 
-                            {error && <p className="text-danger">{error}</p>}
+                            {error && (
+                                <div className={`alert ${isSuccess ? 'alert-success' : 'alert-danger'}`} role="alert">
+                                    {error}
+                                </div>
+                            )}
 
                             <button type="submit" className="btn w-100 mt-3 continue">Register</button>
 
@@ -267,6 +287,7 @@ const Login = () => {
                                         onClick={() => {
                                             setStep(1);
                                             setError("");
+                                            setIsSuccess(false);
                                         }}
                                     >
                                         Login here
@@ -274,7 +295,6 @@ const Login = () => {
                                 </p>
                             </div>
                         </form>
-
                     )}
                 </div>
             </div>

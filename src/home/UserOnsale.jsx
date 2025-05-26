@@ -26,7 +26,7 @@ const UserOnsale = () => {
     const currentProducts = mostWantedProducts.slice(indexOfFirstProduct, indexOfLastProduct);
     const totalPages = Math.ceil(mostWantedProducts.length / productsPerPage);
 
-    
+
     useEffect(() => {
         const fetchProducts = async () => {
             try {
@@ -135,7 +135,7 @@ const UserOnsale = () => {
                                                     zIndex: 10,
                                                     cursor: "pointer",
                                                 }}
-                                              >
+                                            >
                                                 <i
                                                     className={`fa-heart fa-2xl ${isInWishlist ? "fa-solid" : "fa-regular"}`}
                                                     style={{
@@ -166,40 +166,34 @@ const UserOnsale = () => {
                         {/* Pagination - Only show if there are multiple pages */}
                         {totalPages > 1 && (
                             <nav aria-label="Page navigation" className="mt-4">
-                                <ul className="pagination">
+                                <ul className="pagination justify-content-center">
                                     <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                                         <button
-                                            className="page-link"
+                                            className="page-link text-white bg-dark border-dark"
                                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                            
                                         >
                                             Previous
                                         </button>
                                     </li>
+
                                     {[...Array(totalPages).keys()].map(num => (
                                         <li
                                             key={num}
                                             className={`page-item ${currentPage === num + 1 ? 'active' : ''}`}
                                         >
                                             <button
-                                                className="page-link"
+                                                className={`page-link ${currentPage === num + 1 ? 'text-white bg-dark border-dark' : 'text-dark bg-white border-dark'}`}
                                                 onClick={() => setCurrentPage(num + 1)}
-                                                style={{
-                                                    background: currentPage === num + 1 ? "black" : "white",
-                                                    color: currentPage === num + 1 ? "white" : "black",
-                                                    borderColor: "white"
-                                                }}
                                             >
                                                 {num + 1}
                                             </button>
                                         </li>
-
                                     ))}
+
                                     <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                                         <button
-                                            className="page-link"
+                                            className="page-link text-white bg-dark border-dark"
                                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                            
                                         >
                                             Next
                                         </button>
