@@ -465,3 +465,28 @@ input::placeholder {
   border-radius: 20px;
   font-size: 0.8rem;
 }
+
+
+/* download order*/
+
+@media print {
+    .d-print-none {
+        display: none !important;
+    }
+    .modal {
+        position: static !important;
+        overflow: visible !important;
+    }
+    .modal-dialog {
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+}

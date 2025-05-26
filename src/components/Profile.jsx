@@ -10,7 +10,7 @@ const Profile = () => {
     const [step, setStep] = useState(2);
     const [isEditing, setIsEditing] = useState(false);
     const [message, setMessage] = useState("");
-    const [sessionUser, setSessionUser] = useState({});
+
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -151,12 +151,12 @@ const Profile = () => {
         if (userId) {
             axios.get(`https://luna-backend-1.onrender.com/api/users/getuser/${userId}`)
                 .then(res => {
-                    const { profile, mobileNumber } = res.data;
+                    const { profile, mobileNumber, email } = res.data;
                     setFormData({
                         firstName: profile?.firstName || "",
                         lastName: profile?.lastName || "",
                         gender: profile?.gender || "none",
-                        email: profile?.email || "",
+                        email: email || "",
                         mobile: mobileNumber || "",
                         username: storedUser.username || ""
                     });
@@ -209,7 +209,7 @@ const Profile = () => {
 
     const handleSaveAddress = async (e) => {
         e.preventDefault();
-        const userId = sessionUser.userId;
+        const userId = storedUser.userId;
 
         try {
             const res = await axios.post(`https://luna-backend-1.onrender.com/api/users/create-address/${userId}`, address);
@@ -225,7 +225,7 @@ const Profile = () => {
     };
 
     const handleDeleteAddress = async (index) => {
-        const userId = sessionUser.userId;
+        const userId = storedUser.userId;
         const addr = addresses[index];
 
         try {
@@ -294,6 +294,9 @@ const Profile = () => {
     }, [userId]);
 
     const handleRemove = async (productId) => {
+        const confirmDelete = window.confirm("Are you sure you want to remove this product from your wishlist?");
+        if (!confirmDelete) return;
+
         try {
             const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}/${productId}`, {
                 method: 'DELETE',
@@ -413,37 +416,67 @@ const Profile = () => {
 
 
     const handleDownloadPDF = () => {
-        const element = document.getElementById("order-details-pdf");
+    const element = document.getElementById("order-details-pdf");
 
-        const options = {
-            filename: `Order_${selectedOrder._id}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        };
+    // Temporarily hide the buttons before generating PDF
+    const modalFooter = element.querySelector(".modal-footer");
+    if (modalFooter) {
+        modalFooter.style.display = "none";
+    }
 
-        html2pdf().set(options).from(element).save();
+    const options = {
+        margin: [10, 10, 10, 10],
+        filename: `Order_${selectedOrder._id}.pdf`,
+        image: { type: "jpeg", quality: 1 },
+        html2canvas: {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+        },
+        jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+        },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
     };
+
+    html2pdf()
+        .set(options)
+        .from(element)
+        .save()
+        .then(() => {
+            // Show the buttons again after PDF is saved
+            if (modalFooter) {
+                modalFooter.style.display = "";
+            }
+        })
+        .catch((err) => {
+            console.error("PDF generation failed:", err);
+            if (modalFooter) {
+                modalFooter.style.display = "";
+            }
+        });
+};
+
+
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [sessionUser, setSessionUser] = useState({});
 
     // Load user data
     useEffect(() => {
         if (userId) {
             axios.get(`https://luna-backend-1.onrender.com/api/users/profile/${userId}`)
                 .then((res) => {
-                    setSessionUser(res.data);
-                    // Set default profile image if none exists
-                    if (!res.data.profileImage) {
-                        setSessionUser(prev => ({
-                            ...prev,
-                            profileImage: "/default-profile.png"
-                        }));
+                    const userData = res.data || {};
+                    if (!userData.profileImage) {
+                        userData.profileImage = "/default-profile.png";
                     }
+                    setSessionUser(userData);
                 })
                 .catch((err) => {
-                    console.error(err);
-                    // Set default profile image on error
+                    console.error("Error loading user profile:", err);
                     setSessionUser(prev => ({
                         ...prev,
                         profileImage: "/default-profile.png"
@@ -454,14 +487,15 @@ const Profile = () => {
 
     // Handle profile image change
     const handleProfileImageChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const file = e.target.files?.[0];
+        if (!file || !userId) return;
 
         const formData = new FormData();
         formData.append("profileImage", file);
 
         try {
             setIsUploading(true);
+
             const res = await axios.post(
                 `https://luna-backend-1.onrender.com/api/users/uploadprofile/${userId}`,
                 formData,
@@ -470,16 +504,19 @@ const Profile = () => {
                 }
             );
 
-            // Update profile image in state
-            setSessionUser((prev) => ({
-                ...prev,
-                profileImage: res.data.profileImage,
-            }));
+            const updatedImage = res.data?.profileImage;
 
-            // Update in session storage
-            const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
-            storedUser.profileImage = res.data.profileImage;
-            sessionStorage.setItem("user", JSON.stringify(storedUser));
+            if (updatedImage) {
+                setSessionUser(prev => ({
+                    ...prev,
+                    profileImage: updatedImage,
+                }));
+
+                // Update in session storage
+                const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
+                storedUser.profileImage = updatedImage;
+                sessionStorage.setItem("user", JSON.stringify(storedUser));
+            }
 
         } catch (err) {
             console.error("Upload failed:", err);
@@ -488,22 +525,21 @@ const Profile = () => {
         }
     };
 
-    // Function to get profile image URL
+    // Get proper profile image URL
     const getProfileImageUrl = () => {
-        if (!sessionUser.profileImage) {
-            return "/default-profile.png";
-        }
+        const image = sessionUser?.profileImage;
 
-        if (sessionUser.profileImage.startsWith("http")) {
-            return sessionUser.profileImage;
-        }
+        if (!image) return "/default-profile.png";
 
-        if (sessionUser.profileImage.startsWith("/uploads/")) {
-            return `https://luna-backend-1.onrender.com${sessionUser.profileImage}`;
+        if (image.startsWith("http")) {
+            return image;
+        } else if (image.startsWith("/uploads/")) {
+            return `https://luna-backend-1.onrender.com${image}`;
+        } else {
+            return image;
         }
-
-        return sessionUser.profileImage;
     };
+
 
     return (
         <>
@@ -568,7 +604,7 @@ const Profile = () => {
                             {/* User Info */}
                             <div>
                                 <h4>Hello,</h4>
-                                <p>{sessionUser.fullName || sessionUser.username || "User"}</p>
+                                <p>{storedUser.fullName}</p>
                             </div>
                         </div>
 
@@ -602,26 +638,55 @@ const Profile = () => {
                                 </p>
                                 <p className="d-inline-flex align-items-center">
                                     <i className="fa-regular fa-user me-2"></i>
-                                    <a className="btn" data-bs-toggle="collapse" href="#collapsesettings" style={{ cursor: "pointer", color: "black" }} onClick={() => setStep(2)}>Account Settings</a>
+                                    <button
+                                        className="btn"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapsesettings"
+                                        aria-expanded="false"
+                                        aria-controls="collapsesettings"
+                                        style={{ cursor: "pointer", color: "black" }}
+                                        onClick={() => setStep(2)}
+                                    >
+                                        Account Settings
+                                    </button>
                                 </p>
+
                                 <div className="collapse" id="collapsesettings">
-                                    <ul className="rounded divide-y divide-gray-700 border border-gray-700">
-                                        <li
-                                            className="px-4 py-2"
-                                            onClick={() => setStep(2)}
-                                            style={{ cursor: "pointer", color: "black" }}
-                                        >
-                                            Profile Information
+                                    <ul className="list-group rounded divide-y divide-gray-700 border border-gray-700">
+                                        <li className="list-group-item d-inline-flex align-items-center">
+                                            <i className="fa-regular fa-id-card me-2"></i>
+                                            <button
+                                                className="btn"
+                                                style={{ cursor: "pointer", color: "black" }}
+                                                onClick={() => setStep(2)}
+                                            >
+                                                Profile Information
+                                            </button>
                                         </li>
-                                        <li
-                                            className="px-4 py-2"
-                                            onClick={() => setStep(3)}
-                                            style={{ cursor: "pointer", color: "black" }}
-                                        >
-                                            Manage Address
+                                        <li className="list-group-item d-inline-flex align-items-center">
+                                            <i className="fa-solid fa-location-dot me-2"></i>
+                                            <button
+                                                className="btn"
+                                                style={{ cursor: "pointer", color: "black" }}
+                                                onClick={() => setStep(3)}
+                                            >
+                                                Manage Address
+                                            </button>
                                         </li>
+                                        {/* <li className="list-group-item d-inline-flex align-items-center">
+                                            <i className="fa-solid fa-bell me-2"></i>
+                                            <button
+                                                className="btn"
+                                                style={{ cursor: "pointer", color: "black" }}
+                                                onClick={() => setStep(8)}
+                                            >
+                                                Notifications
+                                            </button>
+                                        </li> */}
                                     </ul>
                                 </div>
+
                                 <p className="d-inline-flex align-items-center" style={{ cursor: "pointer" }}>
                                     <i className="fa-solid fa-arrow-right-from-bracket me-2"></i>
                                     <a onClick={handleLogout}>Logout</a>
@@ -634,7 +699,7 @@ const Profile = () => {
                     <div className="col-sm-8 p-5 border border-2">
                         {step === 1 && (
                             <div className="container my-4">
-                                <h3 className="mb-4 text-center text-md-start">My Orders</h3>
+                                <h3 className="mb-4 text-center">My Orders</h3>
 
                                 {ordersLoading ? (
                                     <div className="text-center py-4">
@@ -813,7 +878,7 @@ const Profile = () => {
                                                 </li>
                                             </ul>
                                         </div>
-                                        <div className="modal-footer text-light bg-dark">
+                                        <div className="modal-footer text-light bg-dark d-print-none">
                                             <button className="btn btn-primary" onClick={handleDownloadPDF}>Download as PDF</button>
                                             <button className="btn btn-secondary" onClick={handleCloseModal}>Close</button>
                                         </div>
@@ -825,7 +890,7 @@ const Profile = () => {
                         {step === 2 && (
                             <form className="p-4 border rounded shadow-sm">
                                 <div className="d-flex justify-content-between mb-3">
-                                    <h4 className="text-dark">Profile Information</h4>
+                                    <h4 className="text-dark">Profile</h4>
                                     <button
                                         type="button"
                                         className={`btn btn-sm ${isEditing ? "btn-dark" : "btn-dark"}`}
@@ -1169,7 +1234,7 @@ const Profile = () => {
 
                         {step === 7 && (
                             <div className="container my-4">
-                                <h3 className="mb-4 text-center text-md-start">Track Your Orders</h3>
+                                <h3 className="mb-4 text-center ">Track Your Orders</h3>
 
                                 {ordersLoading ? (
                                     <div className="text-center py-4">

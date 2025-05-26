@@ -43,7 +43,7 @@ const Dashboard = () => {
             const interval = setInterval(() => {
                 setIsTransitioning(true);
                 setTimeout(() => {
-                    setCurrentImageIndex((prevIndex) => 
+                    setCurrentImageIndex((prevIndex) =>
                         prevIndex === images.length - 1 ? 0 : prevIndex + 1
                     );
                     setIsTransitioning(false);
@@ -295,7 +295,7 @@ const Dashboard = () => {
                                 zIndex: 3,
                             }}
                         >
-                            <h1 className="text-light text-wrap text-center px-3" style={{ fontSize: "clamp(1.5rem, 5vw, 3rem)" }}>
+                            <h1 className="text-light text-wrap text-center px-5" style={{ fontSize: "clamp(1.5rem, 5vw, 3rem)" }}>
                                 Level up Your Style With Our Summer Collections
                             </h1>
                             <br />
@@ -321,27 +321,29 @@ const Dashboard = () => {
                             </div>
                             <br /><br />
 
-                            <button
-                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                                onClick={() => scrollLeft('recently-viewed-section')}
-                                style={{ width: '40px', height: '40px' }}
-                            >
-                                <i className="fas fa-chevron-left"></i>
-                            </button>
-                            <div
-                                id="recently-viewed-section"
-                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                            >
-                                {recentlyViewedProducts.map(renderProductCard)}
+                            <div className="position-relative">
+                                <button
+                                    className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-1"
+                                    onClick={() => scrollLeft('recently-viewed-section')}
+                                    style={{ width: '40px', height: '40px' }}
+                                >
+                                    <i className="fas fa-chevron-left"></i>
+                                </button>
+                                <div
+                                    id="recently-viewed-section"
+                                    className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                    style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                                >
+                                    {recentlyViewedProducts.map(renderProductCard)}
+                                </div>
+                                <button
+                                    className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-1"
+                                    onClick={() => scrollRight('recently-viewed-section')}
+                                    style={{ width: '40px', height: '40px' }}
+                                >
+                                    <i className="fas fa-chevron-right"></i>
+                                </button>
                             </div>
-                            <button
-                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                                onClick={() => scrollRight('recently-viewed-section')}
-                                style={{ width: '40px', height: '40px' }}
-                            >
-                                <i className="fas fa-chevron-right"></i>
-                            </button>
                         </div>
                     )}
 
@@ -356,64 +358,65 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <br /><br />
-
-                        <button
-                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                            onClick={() => scrollLeft('categories-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-left"></i>
-                        </button>
-                        <div
-                            id="categories-section"
-                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                        >
-                            {categories.map((category, index) => (
-                                <div
-                                    key={index}
-                                    className="card bg-dark text-white shadow-sm overflow-hidden flex-shrink-0 mx-3 position-relative"
-                                    style={{
-                                        width: "16rem",
-                                        height: "11rem",
-                                        scrollSnapAlign: "center",
-                                        cursor: "pointer",
-                                        borderRadius: "1rem",
-                                        transition: "transform 0.3s",
-                                        overflow: "hidden",
-                                    }}
-                                    onClick={() => handleCategoryClick(category.categoryName)}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = "scale(1.05)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = "scale(1)";
-                                    }}
-                                >
-                                    <img
-                                        src={category.imageUrl}
-                                        className="w-100 h-100"
-                                        alt={`${category.categoryName} Image`}
+                        <div className="position-relative">
+                            <button
+                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-1"
+                                onClick={() => scrollLeft('categories-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div
+                                id="categories-section"
+                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                            >
+                                {categories.map((category, index) => (
+                                    <div
+                                        key={index}
+                                        className="card bg-dark text-white shadow-sm overflow-hidden flex-shrink-0 mx-3 position-relative"
                                         style={{
-                                            objectFit: "cover",
-                                            filter: "brightness(60%)",
+                                            width: "16rem",
+                                            height: "11rem",
+                                            scrollSnapAlign: "center",
+                                            cursor: "pointer",
+                                            borderRadius: "1rem",
+                                            transition: "transform 0.3s",
+                                            overflow: "hidden",
                                         }}
-                                    />
-                                    <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center">
-                                        <h5 className="fw-bold text-white mb-2" style={{ textShadow: "1px 1px 5px rgba(0,0,0,0.7)" }}>
-                                            {category.categoryName}
-                                        </h5>
+                                        onClick={() => handleCategoryClick(category.categoryName)}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = "scale(1.05)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = "scale(1)";
+                                        }}
+                                    >
+                                        <img
+                                            src={category.imageUrl}
+                                            className="w-100 h-100"
+                                            alt={`${category.categoryName} Image`}
+                                            style={{
+                                                objectFit: "cover",
+                                                filter: "brightness(60%)",
+                                            }}
+                                        />
+                                        <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center">
+                                            <h5 className="fw-bold text-white mb-2" style={{ textShadow: "1px 1px 5px rgba(0,0,0,0.7)" }}>
+                                                {category.categoryName}
+                                            </h5>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                            <button
+                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-1"
+                                onClick={() => scrollRight('categories-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <button
-                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                            onClick={() => scrollRight('categories-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-right"></i>
-                        </button>
                     </div>
 
                     <br />
@@ -427,28 +430,29 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <br /><br />
-
-                        <button
-                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                            onClick={() => scrollLeft('best-sellers-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-left"></i>
-                        </button>
-                        <div
-                            id="best-sellers-section"
-                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                        >
-                            {mostWantedProducts.map(renderProductCard)}
+                        <div className="position-relative">
+                            <button
+                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-1"
+                                onClick={() => scrollLeft('best-sellers-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div
+                                id="best-sellers-section"
+                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                            >
+                                {mostWantedProducts.map(renderProductCard)}
+                            </div>
+                            <button
+                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-1"
+                                onClick={() => scrollRight('best-sellers-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <button
-                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                            onClick={() => scrollRight('best-sellers-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-right"></i>
-                        </button>
                     </div>
 
                     <br />
@@ -462,28 +466,29 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <br /><br />
-
-                        <button
-                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                            onClick={() => scrollLeft('new-arrivals-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-left"></i>
-                        </button>
-                        <div
-                            id="new-arrivals-section"
-                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                        >
-                            {newArrivalsProducts.map(renderProductCard)}
+                        <div className="position-relative">
+                            <button
+                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-1"
+                                onClick={() => scrollLeft('new-arrivals-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div
+                                id="new-arrivals-section"
+                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                            >
+                                {newArrivalsProducts.map(renderProductCard)}
+                            </div>
+                            <button
+                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-1"
+                                onClick={() => scrollRight('new-arrivals-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <button
-                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                            onClick={() => scrollRight('new-arrivals-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-right"></i>
-                        </button>
                     </div>
                 </>
             )}

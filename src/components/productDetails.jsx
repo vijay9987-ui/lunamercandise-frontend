@@ -15,12 +15,13 @@ const ProductDetails = ({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [isInWishlist, setIsInWishlist] = useState(false);
+
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
 
     const [mainImage, setMainImage] = useState(selectedItem?.images?.[0] || "/fallback.png");
 
-    // Reset UI when product changes
     useEffect(() => {
         setMainImage(selectedItem?.images?.[0] || "/fallback.png");
         setSelectedSize("");
@@ -29,7 +30,22 @@ const ProductDetails = ({
         setSuccess(null);
     }, [selectedItem]);
 
-    // Mark as recently viewed
+    useEffect(() => {
+        const checkWishlistStatus = async () => {
+            if (!userId || !selectedItem?._id) return;
+
+            try {
+                const res = await axios.get(
+                    `https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`
+                );
+                setIsInWishlist(res.data.wishlist?.some(item => item._id === selectedItem._id));
+            } catch (error) {
+                console.error("Failed to check wishlist status", error);
+            }
+        };
+        checkWishlistStatus();
+    }, [selectedItem?._id, userId]);
+
     useEffect(() => {
         const markAsRecentlyViewed = async () => {
             try {
@@ -58,11 +74,11 @@ const ProductDetails = ({
     }, [selectedItem?._id, userId]);
 
     const addToCart = async () => {
-        if (selectedItem.sizes && !selectedSize) {
+        if (selectedItem?.sizes && !selectedSize) {
             setError("Please select a size");
             return;
         }
-        if (selectedItem.colors && !selectedColor) {
+        if (selectedItem?.colors && !selectedColor) {
             setError("Please select a color");
             return;
         }
@@ -81,7 +97,6 @@ const ProductDetails = ({
                     size: selectedSize || undefined
                 }
             );
-
             setSuccess("Product added to cart successfully!");
         } catch (err) {
             console.error("Error adding to cart:", err);
@@ -102,12 +117,12 @@ const ProductDetails = ({
 
     if (!selectedItem) return null;
 
-    const handleBuyNow = async() => {
-        if (selectedItem.sizes && !selectedSize) {
+    const handleBuyNow = async () => {
+        if (selectedItem?.sizes && !selectedSize) {
             setError("Please select a size");
             return;
         }
-        if (selectedItem.colors && !selectedColor) {
+        if (selectedItem?.colors && !selectedColor) {
             setError("Please select a color");
             return;
         }
@@ -126,7 +141,6 @@ const ProductDetails = ({
                     size: selectedSize || undefined
                 }
             );
-
             setSuccess("Product added to cart successfully!");
             navigate('/dashboard/my-cart');
         } catch (err) {
@@ -136,6 +150,30 @@ const ProductDetails = ({
             setIsLoading(false);
         }
     }
+
+    const toggleWishlist = async (e) => {
+        e.stopPropagation();
+        if (!userId) {
+            navigate('/login');
+            return;
+        }
+
+        try {
+            const response = await axios.post(
+                `https://luna-backend-1.onrender.com/api/products/wishlist/${userId}`,
+                { productId: selectedItem._id },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${storedUser.token}`
+                    }
+                }
+            );
+            setIsInWishlist(response.data.isInWishlist);
+        } catch (error) {
+            setError(error.response?.data?.message || "Failed to update wishlist");
+        }
+    };
 
     return (
         <div className="container my-4">
@@ -167,7 +205,18 @@ const ProductDetails = ({
 
             <div className="row g-4">
                 <div className="col-md-6">
-                    <div className="card h-100 border-light shadow-sm rounded">
+                    <div className="card h-100 border-light shadow-sm rounded position-relative">
+                        <div 
+                            className="position-absolute top-0 end-0 m-3"
+                            style={{ zIndex: 10, cursor: "pointer" }}
+                            onClick={toggleWishlist}
+                        >
+                            <i
+                                className={`fa-heart fa-xl ${isInWishlist ? "fa-solid text-danger" : "fa-regular"}`}
+                                style={{ fontSize: "2rem" }}
+                            ></i>
+                        </div>
+                        
                         <img
                             src={mainImage}
                             alt={selectedItem.name}
@@ -316,24 +365,26 @@ const ProductDetails = ({
                                     </button>
                                 </div>
 
-                                <button
-                                    className="btn btn-dark px-4 py-2 flex-grow-1"
-                                    onClick={addToCart}
-                                    disabled={
-                                        isLoading ||
-                                        (selectedItem.sizes && !selectedSize) ||
-                                        (selectedItem.colors && !selectedColor)
-                                    }
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            Adding...
-                                        </>
-                                    ) : (
-                                        'Add to Cart'
-                                    )}
-                                </button>
+                                <div>
+                                    <button
+                                        className="btn btn-dark px-4 py-2 flex-grow-1"
+                                        onClick={addToCart}
+                                        disabled={
+                                            isLoading ||
+                                            (selectedItem.sizes && !selectedSize) ||
+                                            (selectedItem.colors && !selectedColor)
+                                        }
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Adding...
+                                            </>
+                                        ) : (
+                                            'Add to Cart'
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="d-grid gap-2">

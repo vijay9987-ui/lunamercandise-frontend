@@ -644,7 +644,7 @@ const MyCart = () => {
                                                 ></button>
                                             </div>
                                             <div className="modal-body">
-                                                <form className="row g-3 mt-4" onSubmit={handleSaveAddress}>
+                                                <form className="row g-3 " onSubmit={handleSaveAddress}>
                                                     <div className="col-md-6">
                                                         <label className="form-label">Name*</label>
                                                         <input

@@ -101,8 +101,8 @@ const NewArrival = () => {
                 <div className="mostwanted">
                     <div className="wanted wanted-blur p-5 text-light aligfn-items-center">
                         <center>
-                            <h1 className="text1">New Arrivals</h1><br />
-                            <p className="text2">Latest Design For You Order Now.</p>
+                            <h1 className="text1 text-center">New Arrivals</h1><br />
+                            <p className="text2 text-center" >Latest Design For You Order Now.</p>
                         </center>
                     </div>
                 </div>

@@ -49,9 +49,9 @@ function UserNavbar() {
               <li className="nav-item">
                 <Link className="nav-link mx-2" to="/">Home</Link>
               </li>
-              <li className="nav-item">
-                {/* {<Link className="nav-link mx-2" to="/dashboard/categorypage/:category">Category</Link>} */}
-              </li>
+              {/* <li className="nav-item">
+              <Link className="nav-link mx-2" to="/dashboard/categorypage/:category">Category</Link>
+              </li> */}
               <li className="nav-item">
                 <Link className="nav-link mx-2" to="/onsaleproducts">On-Sale Products</Link>
               </li>
