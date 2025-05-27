@@ -1,20 +1,36 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import UserNavbar from "./UserNavbar";
-import UserFooter from './UserFooter';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import UserProductDetails from './UserProductDetails';
+import { useNavigate } from 'react-router-dom';
+import UserNavbar from "./UserNavbar"; // Changed import
+import UserFooter from './UserFooter'; // Changed import
+import UserProductDetails from './UserProductDetails'; // Changed import
 
-const UserNewArrivals = () => {
+const UserNewArrivals = () => { // Renamed component
     const [step, setStep] = useState(1);
     const [quantity, setQuantity] = useState(1);
     const [selectedItem, setSelectedItem] = useState(null);
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState([]); // This state might be redundant if using CartContext
     const navigate = useNavigate();
     const [newArrivalsProducts, setNewArrivalsProducts] = useState([]);
     const [wishlist, setWishlist] = useState([]);
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
+
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -26,21 +42,58 @@ const UserNewArrivals = () => {
     const currentProducts = newArrivalsProducts.slice(indexOfFirstProduct, indexOfLastProduct);
     const totalPages = Math.ceil(newArrivalsProducts.length / productsPerPage);
 
+    useEffect(() => {
+        const fetchWishlist = async () => {
+            if (!userId) return; // Only fetch if user is logged in
+            try {
+                const res = await fetch(`${IMAGE_BASE_URL}/api/users/wishlist/${userId}`);
+                const data = await res.json();
+                setWishlist(data.wishlist.map(item => item._id));
+            } catch (error) {
+                console.error("Failed to fetch wishlist", error);
+            }
+        };
+        fetchWishlist();
+    }, [userId]);
 
+    const toggleWishlist = async (productId) => {
+        if (!userId) {
+            navigate('/login'); // Redirect to login if not authenticated
+            return;
+        }
+        try {
+            const res = await fetch(`${IMAGE_BASE_URL}/api/products/wishlist/${userId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${storedUser.token}` // Ensure token is sent for authenticated requests
+                },
+                body: JSON.stringify({ productId }),
+            });
+            const data = await res.json();
+
+            if (data.isInWishlist) {
+                setWishlist((prev) => [...prev, productId]);
+            } else {
+                setWishlist((prev) => prev.filter(id => id !== productId));
+            }
+        } catch (error) {
+            console.error("Error toggling wishlist", error);
+            // Optionally show an error message to the user
+        }
+    };
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/new-arrivals");
-                setNewArrivalsProducts(response.data); // Remove the slice(0, 10) to get all products
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/new-arrivals`);
+                setNewArrivalsProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);
             }
         };
         fetchProducts();
     }, []);
-
-    // ... rest of your functions remain the same ...
 
     const quantityDec = () => {
         setQuantity(prevQuantity => Math.max(prevQuantity - 1, 1)); // Prevents going below 1
@@ -54,23 +107,28 @@ const UserNewArrivals = () => {
         setSelectedItem(item);
         setStep(2);
     };
+
+    // This addToCart function is for the UserNewArrivals component,
+    // which seems to directly navigate to cart.
+    // The UserProductDetails component will have its own addToCart logic
+    // that interacts with the backend.
     const addToCart = () => {
         if (selectedItem) {
             const newItem = { ...selectedItem, quantity, total: selectedItem.price * quantity };
-            setCart(prevCart => [...prevCart, newItem]);
+            setCart(prevCart => [...prevCart, newItem]); // Update local cart state
             navigate('/dashboard/my-cart', { state: { cart: [...cart, newItem] } }); // Navigate to MyCart
         }
     };
 
     return (
         <>
-            <UserNavbar />
+            <UserNavbar /> {/* Changed component name */}
             <div className="d-flex justify-content-center">
                 <div className="mostwanted">
                     <div className="wanted wanted-blur p-5 text-light aligfn-items-center">
                         <center>
-                            <h1 className="text1">New Arrivals</h1><br />
-                            <p className="text2">Latest Design For You Order Now.</p>
+                            <h1 className="text1 text-center">New Arrivals</h1><br />
+                            <p className="text2 text-center" >Latest Design For You Order Now.</p>
                         </center>
                     </div>
                 </div>
@@ -109,7 +167,7 @@ const UserNewArrivals = () => {
                                         {/* Product card content remains the same */}
                                         <div style={{ position: "relative" }}>
                                             <img
-                                                src={product.images?.[0] || "fallback.png"}
+                                                src={getFullImageUrl(product.images?.[0])} /* Apply getFullImageUrl here */
                                                 className="card-img img-fluid"
                                                 alt={product.name}
                                                 style={{ height: "200px", objectFit: "cover" }}
@@ -122,7 +180,10 @@ const UserNewArrivals = () => {
                                                     zIndex: 10,
                                                     cursor: "pointer",
                                                 }}
-
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent card click from triggering handlePurchase
+                                                    toggleWishlist(product._id);
+                                                }}
                                             >
                                                 <i
                                                     className={`fa-heart fa-2xl ${isInWishlist ? "fa-solid" : "fa-regular"}`}
@@ -193,19 +254,19 @@ const UserNewArrivals = () => {
             )}
 
             {step === 2 && (
-                <UserProductDetails
+                <UserProductDetails // Changed component name
                     selectedItem={selectedItem}
                     quantity={quantity}
                     quantityDec={quantityDec}
                     quantityInc={quantityInc}
-                    addToCart={addToCart}
+                    addToCart={addToCart} // This addToCart is the local one for navigation
                     goBack={() => setStep(1)}
                 />
             )}
 
-            <UserFooter />
+            <UserFooter /> {/* Changed component name */}
         </>
     );
 };
 
-export default UserNewArrivals;
+export default UserNewArrivals; // Changed export name

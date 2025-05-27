@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../views/Navbar";
-import Footer from "../views/Footer";
-import axios from "axios";
+import Footer from '../views/Footer';
+import axios from 'axios';
 import ProductDetails from "./productDetails";
 
 const Dashboard = () => {
@@ -27,9 +27,25 @@ const Dashboard = () => {
 
     const [images, setImages] = useState([]);
 
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
+
 
     useEffect(() => {
-        axios.get('https://luna-backend-1.onrender.com/api/products/getbanners')
+        axios.get(`${IMAGE_BASE_URL}/api/products/getbanners`)
             .then(res => {
                 const imageArray = res.data.banners[0]?.images || [];
                 setImages(imageArray);
@@ -59,7 +75,7 @@ const Dashboard = () => {
         const fetchWishlist = async () => {
             if (!userId) return;
             try {
-                const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`);
+                const res = await fetch(`${IMAGE_BASE_URL}/api/users/wishlist/${userId}`);
                 const data = await res.json();
                 if (data.wishlist) {
                     setWishlist(data.wishlist.map(item => item._id));
@@ -79,10 +95,11 @@ const Dashboard = () => {
             return;
         }
         try {
-            const res = await fetch(`https://luna-backend-1.onrender.com/api/products/wishlist/${userId}`, {
+            const res = await fetch(`${IMAGE_BASE_URL}/api/products/wishlist/${userId}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${storedUser.token}`
                 },
                 body: JSON.stringify({ productId }),
             });
@@ -103,8 +120,8 @@ const Dashboard = () => {
         const fetchProducts = async () => {
             try {
                 const [newArrivalsResponse, bestSellersResponse] = await Promise.all([
-                    axios.get("https://luna-backend-1.onrender.com/api/products/new-arrivals"),
-                    axios.get("https://luna-backend-1.onrender.com/api/products/best-sellers")
+                    axios.get(`${IMAGE_BASE_URL}/api/products/new-arrivals`),
+                    axios.get(`${IMAGE_BASE_URL}/api/products/best-sellers`)
                 ]);
 
                 setNewArrivalsProducts(newArrivalsResponse.data.slice(0, 10));
@@ -119,7 +136,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchRecentlyViewed = async () => {
             try {
-                const res = await axios.get(`https://luna-backend-1.onrender.com/api/products/recently-viewed/${userId}`);
+                const res = await axios.get(`${IMAGE_BASE_URL}/api/products/recently-viewed/${userId}`);
                 setRecentlyViewedProducts(res.data.slice(0, 10));
             } catch (err) {
                 console.error("Failed to fetch recently viewed products", err);
@@ -142,7 +159,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/categories");
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/categories`);
                 setCategories(response.data);
             } catch (error) {
                 console.error("Error fetching categories:", error);
@@ -228,7 +245,7 @@ const Dashboard = () => {
             >
                 <div style={{ position: "relative" }}>
                     <img
-                        src={product.images?.[0] || "fallback.png"}
+                        src={getFullImageUrl(product.images?.[0])} // Applied getFullImageUrl
                         className="card-img img-fluid"
                         alt={product.name}
                         style={{ height: "200px", objectFit: "cover" }}
@@ -275,7 +292,7 @@ const Dashboard = () => {
                 {images.length > 0 && (
                     <div className="card text-bg-dark position-relative w-100 overflow-hidden" style={{ height: '500px' }}>
                         <img
-                            src={`https://luna-backend-1.onrender.com${images[currentImageIndex]}`}
+                            src={getFullImageUrl(images[currentImageIndex])} // Applied getFullImageUrl
                             className="img-fluid w-100 h-100 position-absolute top-0 start-0"
                             alt="Banner"
                             style={{
@@ -393,7 +410,7 @@ const Dashboard = () => {
                                         }}
                                     >
                                         <img
-                                            src={category.imageUrl}
+                                            src={getFullImageUrl(category.imageUrl)} // Applied getFullImageUrl
                                             className="w-100 h-100"
                                             alt={`${category.categoryName} Image`}
                                             style={{

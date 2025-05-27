@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "../views/Navbar";
 import Footer from '../views/Footer';
@@ -16,6 +16,22 @@ const OnSaleProducts = () => {
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
 
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 12;
@@ -28,8 +44,9 @@ const OnSaleProducts = () => {
 
     useEffect(() => {
         const fetchWishlist = async () => {
+            if (!userId) return; // Only fetch if user is logged in
             try {
-                const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`);
+                const res = await fetch(`${IMAGE_BASE_URL}/api/users/wishlist/${userId}`);
                 const data = await res.json();
                 setWishlist(data.wishlist.map(item => item._id));
             } catch (error) {
@@ -40,11 +57,16 @@ const OnSaleProducts = () => {
     }, [userId]);
 
     const toggleWishlist = async (productId) => {
+        if (!userId) {
+            navigate('/login'); // Redirect to login if not authenticated
+            return;
+        }
         try {
-            const res = await fetch(`https://luna-backend-1.onrender.com/api/products/wishlist/${userId}`, {
+            const res = await fetch(`${IMAGE_BASE_URL}/api/products/wishlist/${userId}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${storedUser.token}` // Ensure token is sent for authenticated requests
                 },
                 body: JSON.stringify({ productId }),
             });
@@ -57,22 +79,21 @@ const OnSaleProducts = () => {
             }
         } catch (error) {
             console.error("Error toggling wishlist", error);
+            // Optionally show an error message to the user
         }
     };
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/on-sale");
-                setMostWantedProducts(response.data); // Remove the slice(0, 10) to get all products
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/on-sale`);
+                setMostWantedProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);
             }
         };
         fetchProducts();
     }, []);
-
-    // ... rest of your functions remain the same ...
 
     const quantityDec = () => {
         setQuantity(prevQuantity => Math.max(prevQuantity - 1, 1));
@@ -86,6 +107,7 @@ const OnSaleProducts = () => {
         setSelectedItem(product);
         setStep(2);
     };
+
     const addToCart = () => {
         if (selectedItem) {
             const newItem = { ...selectedItem, quantity, total: selectedItem.price * quantity };
@@ -155,7 +177,7 @@ const OnSaleProducts = () => {
 
                                         <div style={{ position: "relative" }}>
                                             <img
-                                                src={product.images?.[0] || "fallback.png"}
+                                                src={getFullImageUrl(product.images?.[0])} /* Apply getFullImageUrl here */
                                                 className="card-img img-fluid"
                                                 alt={product.name}
                                                 style={{ height: "200px", objectFit: "cover" }}

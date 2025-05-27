@@ -9,40 +9,66 @@ const UserProductDetails = ({
     quantityInc,
     goBack
 }) => {
-    // All hooks must be called unconditionally at the top
     const navigate = useNavigate();
     const [selectedSize, setSelectedSize] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const [mainImage, setMainImage] = useState("");
-    const [storedUser, setStoredUser] = useState({});
 
-    // Initialize state based on props after first render
-    useEffect(() => {
-        if (selectedItem) {
-            setMainImage(selectedItem?.images?.[0] || "/fallback.png");
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
         }
-        const user = JSON.parse(sessionStorage.getItem("user")) || {};
-        setStoredUser(user);
-    }, [selectedItem]);
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
 
-    useEffect(() => {
-        setError(null);
-        setSuccess(null);
-    }, [selectedItem]);
+    // Initialize mainImage with the full URL
+    const [mainImage, setMainImage] = useState(getFullImageUrl(selectedItem?.images?.[0]));
+    // Initialize storedUser directly from sessionStorage
+    const [storedUser, setStoredUser] = useState(() => {
+        try {
+            return JSON.parse(sessionStorage.getItem("user")) || {};
+        } catch (e) {
+            console.error("Failed to parse user from session storage:", e);
+            return {};
+        }
+    });
 
     const userId = storedUser.userId;
     const token = storedUser.token;
 
+    // Effect to update main image and reset selections when selectedItem changes
+    useEffect(() => {
+        if (selectedItem) {
+            setMainImage(getFullImageUrl(selectedItem.images?.[0]));
+        }
+        setSelectedSize("");
+        setSelectedColor("");
+        setError(null);
+        setSuccess(null);
+    }, [selectedItem]);
+
     // Mark as recently viewed
     useEffect(() => {
         const markAsRecentlyViewed = async () => {
+            if (!userId || !selectedItem?._id || !token) {
+                // Do not proceed if user or product ID or token is missing
+                return;
+            }
             try {
                 await axios.post(
-                    `https://luna-backend-1.onrender.com/api/products/recently-viewed/${userId}`,
-                    { productId: selectedItem?._id },
+                    `${IMAGE_BASE_URL}/api/products/recently-viewed/${userId}`,
+                    { productId: selectedItem._id },
                     {
                         headers: {
                             'Content-Type': 'application/json',
@@ -51,25 +77,34 @@ const UserProductDetails = ({
                     }
                 );
             } catch (err) {
-                console.error("Failed to mark as recently viewed:", err);
+                console.error("Failed to mark as recently viewed:", {
+                    message: err.message,
+                    status: err.response?.status,
+                    data: err.response?.data
+                });
             }
         };
 
-        if (userId && selectedItem?._id) {
-            markAsRecentlyViewed();
-        }
-    }, [selectedItem?._id, userId, token]);
+        markAsRecentlyViewed();
+    }, [selectedItem?._id, userId, token]); // Add token to dependency array
 
     const addToCart = () => {
+        // This function currently navigates to login.
+        // If the user is logged in, you might want to add product to cart here.
         navigate('/login');
     };
 
     const getContrastColor = (hexColor) => {
         if (!hexColor) return '#000000';
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
+        // Remove '#' if present
+        const cleanHex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor;
+        // Parse hex to RGB
+        const r = parseInt(cleanHex.substring(0, 2), 16);
+        const g = parseInt(cleanHex.substring(2, 4), 16);
+        const b = parseInt(cleanHex.substring(4, 6), 16);
+        // Calculate luminance
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        // Return black for light colors, white for dark colors
         return luminance > 0.5 ? '#000000' : '#FFFFFF';
     };
 
@@ -126,15 +161,15 @@ const UserProductDetails = ({
                                 {selectedItem.images.map((img, idx) => (
                                     <img
                                         key={idx}
-                                        src={img}
+                                        src={getFullImageUrl(img)} /* Apply getFullImageUrl */
                                         alt={`Preview ${idx + 1}`}
-                                        onClick={() => setMainImage(img)}
+                                        onClick={() => setMainImage(getFullImageUrl(img))} /* Apply getFullImageUrl */
                                         style={{
                                             width: '60px',
                                             height: '60px',
                                             objectFit: 'cover',
                                             cursor: 'pointer',
-                                            border: mainImage === img ? '2px solid #0d6efd' : '1px solid #ccc',
+                                            border: mainImage === getFullImageUrl(img) ? '2px solid #0d6efd' : '1px solid #ccc',
                                             borderRadius: '5px'
                                         }}
                                     />
@@ -152,7 +187,7 @@ const UserProductDetails = ({
 
                             <div className="d-flex align-items-center mb-3">
                                 {selectedItem.originalPrice && (
-                                    <span className="text-decoration-line-through text-secoundary me-2">
+                                    <span className="text-decoration-line-through text-secondary me-2">
                                         ₹{selectedItem.originalPrice}
                                     </span>
                                 )}
@@ -176,7 +211,7 @@ const UserProductDetails = ({
                                             className={`fas fa-star ${i < selectedItem.rating ? 'text-warning' : 'text-secondary'}`}
                                         ></i>
                                     ))}
-                                    <span className="ms-2 small text-secoundary">
+                                    <span className="ms-2 small text-secondary">
                                         ({selectedItem.ratingCount || 0} reviews)
                                     </span>
                                 </div>

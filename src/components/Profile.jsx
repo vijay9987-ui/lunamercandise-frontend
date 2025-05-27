@@ -36,6 +36,19 @@ const Profile = () => {
         type: "Home"
     });
 
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/placeholder.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `https://luna-backend-1.onrender.com${imagePath}`;
+    };
+
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -416,48 +429,48 @@ const Profile = () => {
 
 
     const handleDownloadPDF = () => {
-    const element = document.getElementById("order-details-pdf");
+        const element = document.getElementById("order-details-pdf");
 
-    // Temporarily hide the buttons before generating PDF
-    const modalFooter = element.querySelector(".modal-footer");
-    if (modalFooter) {
-        modalFooter.style.display = "none";
-    }
+        // Temporarily hide the buttons before generating PDF
+        const modalFooter = element.querySelector(".modal-footer");
+        if (modalFooter) {
+            modalFooter.style.display = "none";
+        }
 
-    const options = {
-        margin: [10, 10, 10, 10],
-        filename: `Order_${selectedOrder._id}.pdf`,
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: {
-            scale: 3,
-            useCORS: true,
-            allowTaint: true,
-        },
-        jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-        },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        const options = {
+            margin: [10, 10, 10, 10],
+            filename: `Order_${selectedOrder._id}.pdf`,
+            image: { type: "jpeg", quality: 1 },
+            html2canvas: {
+                scale: 3,
+                useCORS: true,
+                allowTaint: true,
+            },
+            jsPDF: {
+                unit: "mm",
+                format: "a4",
+                orientation: "portrait",
+            },
+            pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        };
+
+        html2pdf()
+            .set(options)
+            .from(element)
+            .save()
+            .then(() => {
+                // Show the buttons again after PDF is saved
+                if (modalFooter) {
+                    modalFooter.style.display = "";
+                }
+            })
+            .catch((err) => {
+                console.error("PDF generation failed:", err);
+                if (modalFooter) {
+                    modalFooter.style.display = "";
+                }
+            });
     };
-
-    html2pdf()
-        .set(options)
-        .from(element)
-        .save()
-        .then(() => {
-            // Show the buttons again after PDF is saved
-            if (modalFooter) {
-                modalFooter.style.display = "";
-            }
-        })
-        .catch((err) => {
-            console.error("PDF generation failed:", err);
-            if (modalFooter) {
-                modalFooter.style.display = "";
-            }
-        });
-};
 
 
     const fileInputRef = useRef(null);
@@ -537,6 +550,35 @@ const Profile = () => {
             return `https://luna-backend-1.onrender.com${image}`;
         } else {
             return image;
+        }
+    };
+
+    // State for cancel order functionality
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [orderToCancel, setOrderToCancel] = useState(null);
+    const [cancellationReason, setCancellationReason] = useState('');
+
+    const handleCancelOrder = (orderId) => {
+        setOrderToCancel(orderId);
+        setShowCancelModal(true);
+    };
+
+    const confirmCancelOrder = async () => {
+        try {
+            const response = await axios.post(`https://luna-backend-1.onrender.com/api/users/cancelorder/${userId}/${orderToCancel}`, {
+                cancellationReason
+            });
+
+            if (response.data) {
+                // Refresh orders or update the specific order status
+                fetchOrders(); // Assuming you have a function to refetch orders
+                setShowCancelModal(false);
+                setCancellationReason('');
+                // toast.success('Order cancelled successfully');
+            }
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            // toast.error(error.response?.data?.message || 'Failed to cancel order');
         }
     };
 
@@ -695,6 +737,7 @@ const Profile = () => {
                         </div>
                     </div>
 
+
                     {/* Main Content */}
                     <div className="col-sm-8 p-5 border border-2">
                         {step === 1 && (
@@ -745,7 +788,7 @@ const Profile = () => {
                                                                 {order.products.map(product => (
                                                                     <div key={product.productId._id} className="d-flex align-items-center gap-2">
                                                                         <img
-                                                                            src={product.productId.images?.[0] || "/fallback.png"}
+                                                                            src={getFullImageUrl(product.productId.images?.[0]) || "/fallback.png"}
                                                                             alt={product.productId.name}
                                                                             className="rounded"
                                                                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
@@ -766,26 +809,37 @@ const Profile = () => {
 
                                                         <td>
                                                             <span
-                                                                className={`badge ${order.orderStatus === 'Delivered'
-                                                                    ? 'bg-success'
-                                                                    : order.orderStatus === 'Cancelled'
-                                                                        ? 'bg-danger'
-                                                                        : order.orderStatus === 'Processing'
-                                                                            ? 'bg-warning text-dark'
-                                                                            : 'bg-info'
+                                                                className={`badge 
+    ${order.orderStatus === 'Delivered' ? 'bg-success' :
+                                                                        order.orderStatus === 'Shipped' ? 'bg-primary' :
+                                                                            order.orderStatus === 'Confirmed' ? 'bg-info' :
+                                                                                order.orderStatus === 'Cancel request' ? 'bg-warning text-dark' :
+                                                                                    order.orderStatus === 'Cancelled' ? 'bg-danger' :
+                                                                                        'bg-secondary' // Pending or any unknown status
                                                                     }`}
                                                             >
                                                                 {order.orderStatus}
                                                             </span>
+
                                                         </td>
 
                                                         <td>
-                                                            <button
-                                                                className="btn btn-sm btn-outline-dark w-100"
-                                                                onClick={() => handleViewDetails(order)}
-                                                            >
-                                                                View Details
-                                                            </button>
+                                                            <div className="d-flex flex-column gap-2">
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-dark w-100"
+                                                                    onClick={() => handleViewDetails(order)}
+                                                                >
+                                                                    View Details
+                                                                </button>
+                                                                {order.orderStatus === 'Pending' && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-outline-danger w-100"
+                                                                        onClick={() => handleCancelOrder(order._id)}
+                                                                    >
+                                                                        Cancel Order
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -796,7 +850,50 @@ const Profile = () => {
                             </div>
                         )}
 
-
+                        {/* Cancel Order Confirmation Modal */}
+                        {showCancelModal && (
+                            <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                                <div className="modal-dialog modal-dialog-centered">
+                                    <div className="modal-content">
+                                        <div className="modal-header">
+                                            <h5 className="modal-title">Cancel Order</h5>
+                                            <button type="button" className="btn-close" onClick={() => setShowCancelModal(false)}></button>
+                                        </div>
+                                        <div className="modal-body">
+                                            <p>Are you sure you want to cancel this order?</p>
+                                            <div className="mb-3">
+                                                <label htmlFor="cancellationReason" className="form-label">Reason for cancellation:</label>
+                                                <textarea
+                                                    className="form-control"
+                                                    id="cancellationReason"
+                                                    rows="3"
+                                                    value={cancellationReason}
+                                                    onChange={(e) => setCancellationReason(e.target.value)}
+                                                    required
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                        <div className="modal-footer">
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary"
+                                                onClick={() => setShowCancelModal(false)}
+                                            >
+                                                Close
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-danger"
+                                                onClick={confirmCancelOrder}
+                                                disabled={!cancellationReason.trim()}
+                                            >
+                                                Confirm Cancellation
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {showOrderModal && selectedOrder && (
                             <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "white" }}>
@@ -824,7 +921,7 @@ const Profile = () => {
                                                     <li key={product.productId._id} className="list-group-item d-flex justify-content-between align-items-center bg-transparent text-white">
                                                         <div className="d-flex align-items-center">
                                                             <img
-                                                                src={product.productId.images?.[0] || "/fallback.png"}
+                                                                src={getFullImageUrl(product.productId.images?.[0]) || "/fallback.png"}
                                                                 alt={product.productId.name}
                                                                 style={{ width: "50px", height: "50px", objectFit: "cover" }}
                                                                 className="rounded me-2"
@@ -865,16 +962,17 @@ const Profile = () => {
                                                 </li>
                                                 <li className="list-group-item d-flex justify-content-between bg-transparent text-white">
                                                     <span>Order Status</span>
-                                                    <span className={`badge ${selectedOrder.orderStatus === 'Delivered'
-                                                        ? 'bg-success'
-                                                        : selectedOrder.orderStatus === 'Cancelled'
-                                                            ? 'bg-danger'
-                                                            : selectedOrder.orderStatus === 'Processing'
-                                                                ? 'bg-warning text-dark'
-                                                                : 'bg-info'
+                                                    <span className={`badge 
+  ${selectedOrder.orderStatus === 'Delivered' ? 'bg-success' :
+                                                            selectedOrder.orderStatus === 'Shipped' ? 'bg-primary' :
+                                                                selectedOrder.orderStatus === 'Confirmed' ? 'bg-info' :
+                                                                    selectedOrder.orderStatus === 'Cancel request' ? 'bg-warning text-dark' :
+                                                                        selectedOrder.orderStatus === 'Cancelled' ? 'bg-danger' :
+                                                                            'bg-secondary' // Pending
                                                         }`}>
                                                         {selectedOrder.orderStatus}
                                                     </span>
+
                                                 </li>
                                             </ul>
                                         </div>
@@ -886,6 +984,7 @@ const Profile = () => {
                                 </div>
                             </div>
                         )}
+
 
                         {step === 2 && (
                             <form className="p-4 border rounded shadow-sm">
@@ -1081,7 +1180,7 @@ const Profile = () => {
                                                     <div className="d-flex flex-column flex-sm-row align-items-start">
                                                         {/* Product Image */}
                                                         <img
-                                                            src={product.images?.[0] || "fallback.png"}
+                                                            src={getFullImageUrl(product.images?.[0]) || "fallback.png"}
                                                             alt={product.name}
                                                             className="rounded img-fluid"
                                                             style={{ height: "100px", width: "100px", objectFit: "cover" }}
@@ -1135,7 +1234,7 @@ const Profile = () => {
                                                         <tr key={item.product._id}>
                                                             <td>
                                                                 <img
-                                                                    src={item.product.images?.[0] || "/fallback.png"}
+                                                                    src={getFullImageUrl(item.product.images?.[0]) || "/fallback.png"}
                                                                     alt={item.product.name}
                                                                     className="img-fluid rounded border"
                                                                     style={{ maxHeight: "80px" }}
@@ -1347,7 +1446,7 @@ const Profile = () => {
                                                                         <div className="timeline-content ms-3">
                                                                             <h6 className="mb-1">{status.status}</h6>
                                                                             <p className="text-muted mb-1">
-                                                                                {new Date(status.timestamp).toLocaleString()}
+                                                                                {new Date(status.updatedAt).toLocaleString()}
                                                                             </p>
                                                                             {status.message && (
                                                                                 <p className="mb-0">{status.message}</p>

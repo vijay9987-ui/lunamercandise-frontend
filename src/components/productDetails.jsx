@@ -23,10 +23,27 @@ const ProductDetails = ({
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
 
-    const [mainImage, setMainImage] = useState(selectedItem?.images?.[0] || "/fallback.png");
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
+
+    const [mainImage, setMainImage] = useState(getFullImageUrl(selectedItem?.images?.[0]));
 
     useEffect(() => {
-        setMainImage(selectedItem?.images?.[0] || "/fallback.png");
+        // Set main image when selectedItem changes, ensuring full URL
+        setMainImage(getFullImageUrl(selectedItem?.images?.[0]));
         setSelectedSize("");
         setSelectedColor("");
         setError(null);
@@ -112,10 +129,15 @@ const ProductDetails = ({
 
     const getContrastColor = (hexColor) => {
         if (!hexColor) return '#000000';
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
+        // Remove '#' if present
+        const cleanHex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor;
+        // Parse hex to RGB
+        const r = parseInt(cleanHex.substring(0, 2), 16);
+        const g = parseInt(cleanHex.substring(2, 4), 16);
+        const b = parseInt(cleanHex.substring(4, 6), 16);
+        // Calculate luminance
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        // Return black for light colors, white for dark colors
         return luminance > 0.5 ? '#000000' : '#FFFFFF';
     };
 
@@ -210,7 +232,7 @@ const ProductDetails = ({
             <div className="row g-4">
                 <div className="col-md-6">
                     <div className="card h-100 border-light shadow-sm rounded position-relative">
-                        <div 
+                        <div
                             className="position-absolute top-0 end-0 m-3"
                             style={{ zIndex: 10, cursor: "pointer" }}
                             onClick={toggleWishlist}
@@ -220,7 +242,7 @@ const ProductDetails = ({
                                 style={{ fontSize: "2rem" }}
                             ></i>
                         </div>
-                        
+
                         <img
                             src={mainImage}
                             alt={selectedItem.name}
@@ -237,15 +259,15 @@ const ProductDetails = ({
                                 {selectedItem.images.map((img, idx) => (
                                     <img
                                         key={idx}
-                                        src={img}
+                                        src={getFullImageUrl(img)} /* Use getFullImageUrl here */
                                         alt={`Preview ${idx + 1}`}
-                                        onClick={() => setMainImage(img)}
+                                        onClick={() => setMainImage(getFullImageUrl(img))} /* Use getFullImageUrl here */
                                         style={{
                                             width: '60px',
                                             height: '60px',
                                             objectFit: 'cover',
                                             cursor: 'pointer',
-                                            border: mainImage === img ? '2px solid #0d6efd' : '1px solid #ccc',
+                                            border: mainImage === getFullImageUrl(img) ? '2px solid #0d6efd' : '1px solid #ccc',
                                             borderRadius: '5px'
                                         }}
                                     />

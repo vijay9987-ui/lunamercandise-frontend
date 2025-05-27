@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import UserNavbar from "./UserNavbar";
-import UserFooter from './UserFooter';
+import UserNavbar from "./UserNavbar"; // Changed import
+import UserFooter from './UserFooter'; // Changed import
 import axios from 'axios';
-import UserProductDetails from './UserProductDetails';
+import UserProductDetails from './UserProductDetails'; // Changed import
 
-const UserOnsale = () => {
+const UserOnsale = () => { // Renamed component
     const [step, setStep] = useState(1);
     const [quantity, setQuantity] = useState(1);
     const [selectedItem, setSelectedItem] = useState(null);
@@ -15,6 +15,22 @@ const UserOnsale = () => {
     const [wishlist, setWishlist] = useState([]);
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
+
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -26,20 +42,58 @@ const UserOnsale = () => {
     const currentProducts = mostWantedProducts.slice(indexOfFirstProduct, indexOfLastProduct);
     const totalPages = Math.ceil(mostWantedProducts.length / productsPerPage);
 
+    useEffect(() => {
+        const fetchWishlist = async () => {
+            if (!userId) return; // Only fetch if user is logged in
+            try {
+                const res = await fetch(`${IMAGE_BASE_URL}/api/users/wishlist/${userId}`);
+                const data = await res.json();
+                setWishlist(data.wishlist.map(item => item._id));
+            } catch (error) {
+                console.error("Failed to fetch wishlist", error);
+            }
+        };
+        fetchWishlist();
+    }, [userId]);
+
+    const toggleWishlist = async (productId) => {
+        if (!userId) {
+            navigate('/login'); // Redirect to login if not authenticated
+            return;
+        }
+        try {
+            const res = await fetch(`${IMAGE_BASE_URL}/api/products/wishlist/${userId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${storedUser.token}` // Ensure token is sent for authenticated requests
+                },
+                body: JSON.stringify({ productId }),
+            });
+            const data = await res.json();
+
+            if (data.isInWishlist) {
+                setWishlist((prev) => [...prev, productId]);
+            } else {
+                setWishlist((prev) => prev.filter(id => id !== productId));
+            }
+        } catch (error) {
+            console.error("Error toggling wishlist", error);
+            // Optionally show an error message to the user
+        }
+    };
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/on-sale");
-                setMostWantedProducts(response.data); // Remove the slice(0, 10) to get all products
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/on-sale`);
+                setMostWantedProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);
             }
         };
         fetchProducts();
     }, []);
-
-    // ... rest of your functions remain the same ...
 
     const quantityDec = () => {
         setQuantity(prevQuantity => Math.max(prevQuantity - 1, 1));
@@ -53,6 +107,7 @@ const UserOnsale = () => {
         setSelectedItem(product);
         setStep(2);
     };
+
     const addToCart = () => {
         if (selectedItem) {
             const newItem = { ...selectedItem, quantity, total: selectedItem.price * quantity };
@@ -63,7 +118,7 @@ const UserOnsale = () => {
 
     return (
         <>
-            <UserNavbar />
+            <UserNavbar /> {/* Changed component name */}
             <div className="d-flex justify-content-center">
                 <div className="mostwanted">
                     <div className="wanted wanted-blur p-5 text-light align-items-center">
@@ -122,7 +177,7 @@ const UserOnsale = () => {
 
                                         <div style={{ position: "relative" }}>
                                             <img
-                                                src={product.images?.[0] || "fallback.png"}
+                                                src={getFullImageUrl(product.images?.[0])} /* Apply getFullImageUrl here */
                                                 className="card-img img-fluid"
                                                 alt={product.name}
                                                 style={{ height: "200px", objectFit: "cover" }}
@@ -134,6 +189,10 @@ const UserOnsale = () => {
                                                     right: "10px",
                                                     zIndex: 10,
                                                     cursor: "pointer",
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleWishlist(product._id);
                                                 }}
                                             >
                                                 <i
@@ -206,7 +265,7 @@ const UserOnsale = () => {
             )}
 
             {step === 2 && (
-                <UserProductDetails
+                <UserProductDetails // Changed component name
                     selectedItem={selectedItem}
                     quantity={quantity}
                     quantityDec={quantityDec}
@@ -216,9 +275,9 @@ const UserOnsale = () => {
                 />
             )}
 
-            <UserFooter />
+            <UserFooter /> {/* Changed component name */}
         </>
     );
 };
 
-export default UserOnsale;
+export default UserOnsale; // Changed export name

@@ -30,6 +30,21 @@ const MyCart = () => {
         type: "Home"
     });
 
+
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/placeholder.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `https://luna-backend-1.onrender.com${imagePath}`;
+    };
+
     const [cartData, setCartData] = useState({
         cartItems: [],
         totalItems: 0,
@@ -371,7 +386,7 @@ const MyCart = () => {
                                         <table className="table table-bordered align-middle text-center">
                                             <thead>
                                                 <tr>
-                                                    <th style={{ backgroundColor: "black", color: "white"}}>
+                                                    <th style={{ backgroundColor: "black", color: "white" }}>
                                                         <input
                                                             type="checkbox"
                                                             checked={selectAll}
@@ -379,11 +394,11 @@ const MyCart = () => {
                                                             disabled={cartData.loading}
                                                         />
                                                     </th>
-                                                    <th style={{ backgroundColor: "black", color: "white"}}>Image</th>
-                                                    <th style={{ backgroundColor: "black", color: "white"}}>Product</th>
-                                                    <th style={{ backgroundColor: "black", color: "white"}}>Quantity</th>
-                                                    <th style={{ backgroundColor: "black", color: "white"}}>Total</th>
-                                                    <th style={{ backgroundColor: "black", color: "white"}}>Action</th>
+                                                    <th style={{ backgroundColor: "black", color: "white" }}>Image</th>
+                                                    <th style={{ backgroundColor: "black", color: "white" }}>Product</th>
+                                                    <th style={{ backgroundColor: "black", color: "white" }}>Quantity</th>
+                                                    <th style={{ backgroundColor: "black", color: "white" }}>Total</th>
+                                                    <th style={{ backgroundColor: "black", color: "white" }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -400,7 +415,7 @@ const MyCart = () => {
 
                                                         <td>
                                                             <img
-                                                                src={item.product.images?.[0] || "/fallback.png"}
+                                                                src={getFullImageUrl(item.product.images?.[0]) || "/fallback.png"}
                                                                 alt={item.product.name}
                                                                 className="img-fluid rounded border"
                                                                 style={{ maxHeight: "80px" }}
@@ -485,7 +500,7 @@ const MyCart = () => {
                             <div className='row'>
                                 <div className="col-sm-6">
                                     <div className="card mb-3">
-                                        <div className="card-header" style={{ backgroundColor: "black", color: "white"}}>
+                                        <div className="card-header" style={{ backgroundColor: "black", color: "white" }}>
                                             <h5 className="mb-0" >Delivery Address</h5>
                                         </div>
                                         <div className="card-body">
@@ -551,7 +566,7 @@ const MyCart = () => {
 
                                 <div className="col-sm-6">
                                     <div className="card mb-3">
-                                        <div className="card-header" style={{ backgroundColor: "black", color: "white"}}>
+                                        <div className="card-header" style={{ backgroundColor: "black", color: "white" }}>
                                             <h5 className="mb-0">Payment Method</h5>
                                         </div>
                                         <div className="card-body">

@@ -1,20 +1,36 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "../views/Navbar";
 import Footer from '../views/Footer';
-import axios from 'axios';
-import ProductDetails from './productDetails';
+import ProductDetails from './productDetails'; // Assuming this is the ProductDetails component for logged-in users
 
 const NewArrival = () => {
     const [step, setStep] = useState(1);
     const [quantity, setQuantity] = useState(1);
     const [selectedItem, setSelectedItem] = useState(null);
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState([]); // This state might be redundant if using CartContext
     const navigate = useNavigate();
     const [newArrivalsProducts, setNewArrivalsProducts] = useState([]);
     const [wishlist, setWishlist] = useState([]);
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
+
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,8 +44,9 @@ const NewArrival = () => {
 
     useEffect(() => {
         const fetchWishlist = async () => {
+            if (!userId) return; // Only fetch if user is logged in
             try {
-                const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`);
+                const res = await fetch(`${IMAGE_BASE_URL}/api/users/wishlist/${userId}`);
                 const data = await res.json();
                 setWishlist(data.wishlist.map(item => item._id));
             } catch (error) {
@@ -40,11 +57,16 @@ const NewArrival = () => {
     }, [userId]);
 
     const toggleWishlist = async (productId) => {
+        if (!userId) {
+            navigate('/login'); // Redirect to login if not authenticated
+            return;
+        }
         try {
-            const res = await fetch(`https://luna-backend-1.onrender.com/api/products/wishlist/${userId}`, {
+            const res = await fetch(`${IMAGE_BASE_URL}/api/products/wishlist/${userId}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${storedUser.token}` // Ensure token is sent for authenticated requests
                 },
                 body: JSON.stringify({ productId }),
             });
@@ -57,22 +79,21 @@ const NewArrival = () => {
             }
         } catch (error) {
             console.error("Error toggling wishlist", error);
+            // Optionally show an error message to the user
         }
     };
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/new-arrivals");
-                setNewArrivalsProducts(response.data); // Remove the slice(0, 10) to get all products
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/new-arrivals`);
+                setNewArrivalsProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);
             }
         };
         fetchProducts();
     }, []);
-
-    // ... rest of your functions remain the same ...
 
     const quantityDec = () => {
         setQuantity(prevQuantity => Math.max(prevQuantity - 1, 1)); // Prevents going below 1
@@ -86,10 +107,15 @@ const NewArrival = () => {
         setSelectedItem(item);
         setStep(2);
     };
+
+    // This addToCart function is for the NewArrival component,
+    // which seems to directly navigate to cart.
+    // The ProductDetails component will have its own addToCart logic
+    // that interacts with the backend.
     const addToCart = () => {
         if (selectedItem) {
             const newItem = { ...selectedItem, quantity, total: selectedItem.price * quantity };
-            setCart(prevCart => [...prevCart, newItem]);
+            setCart(prevCart => [...prevCart, newItem]); // Update local cart state
             navigate('/dashboard/my-cart', { state: { cart: [...cart, newItem] } }); // Navigate to MyCart
         }
     };
@@ -141,7 +167,7 @@ const NewArrival = () => {
                                         {/* Product card content remains the same */}
                                         <div style={{ position: "relative" }}>
                                             <img
-                                                src={product.images?.[0] || "fallback.png"}
+                                                src={getFullImageUrl(product.images?.[0])} /* Apply getFullImageUrl here */
                                                 className="card-img img-fluid"
                                                 alt={product.name}
                                                 style={{ height: "200px", objectFit: "cover" }}
@@ -155,7 +181,7 @@ const NewArrival = () => {
                                                     cursor: "pointer",
                                                 }}
                                                 onClick={(e) => {
-                                                    e.stopPropagation();
+                                                    e.stopPropagation(); // Prevent card click from triggering handlePurchase
                                                     toggleWishlist(product._id);
                                                 }}
                                             >
@@ -233,7 +259,7 @@ const NewArrival = () => {
                     quantity={quantity}
                     quantityDec={quantityDec}
                     quantityInc={quantityInc}
-                    addToCart={addToCart}
+                    addToCart={addToCart} // This addToCart is the local one for navigation
                     goBack={() => setStep(1)}
                 />
             )}

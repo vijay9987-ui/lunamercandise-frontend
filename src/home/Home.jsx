@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import UserNavbar from "./UserNavbar";
-import UserFooter from "./UserFooter";
-import UserProductDetails from "./UserProductDetails";
+import UserNavbar from "./UserNavbar"; // Changed import
+import UserFooter from "./UserFooter"; // Changed import
+import UserProductDetails from "./UserProductDetails"; // Changed import
 import axios from "axios";
 
-const Home = () => {
+const Home = () => { // Renamed component from Dashboard to Home
     const navigate = useNavigate();
 
     const [banners, setBanners] = useState([]);
     const [categories, setCategories] = useState([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    // Removed recentlyViewedProducts state as it's not used in the provided new code
     const [newArrivalsProducts, setNewArrivalsProducts] = useState([]);
     const [mostWantedProducts, setMostWantedProducts] = useState([]);
     const [step, setStep] = useState(1);
@@ -24,11 +25,27 @@ const Home = () => {
     const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
     const userId = storedUser.userId;
 
+    // Base URL for images
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
+
+    // Helper function to get the full image URL
+    const getFullImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return "/fallback.png"; // Fallback for missing image path
+        }
+        // Check if the image path is already a full URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        // Prepend the base URL for relative paths
+        return `${IMAGE_BASE_URL}${imagePath}`;
+    };
+
     // Fetch banners
     useEffect(() => {
         const fetchBanners = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/getbanners");
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/getbanners`);
                 const bannerImages = response.data.banners[0]?.images || [];
                 setBanners(bannerImages);
             } catch (error) {
@@ -44,7 +61,7 @@ const Home = () => {
             const interval = setInterval(() => {
                 setIsTransitioning(true);
                 setTimeout(() => {
-                    setCurrentImageIndex((prevIndex) => 
+                    setCurrentImageIndex((prevIndex) =>
                         prevIndex === banners.length - 1 ? 0 : prevIndex + 1
                     );
                     setIsTransitioning(false);
@@ -55,13 +72,58 @@ const Home = () => {
         }
     }, [banners]);
 
+    // Fetch wishlist for the user
+    useEffect(() => {
+        const fetchWishlist = async () => {
+            if (!userId) return;
+            try {
+                const res = await fetch(`${IMAGE_BASE_URL}/api/users/wishlist/${userId}`);
+                const data = await res.json();
+                if (data.wishlist) {
+                    setWishlist(data.wishlist.map(item => item._id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch wishlist", error);
+            }
+        };
+        fetchWishlist();
+    }, [userId]);
+
+    // Toggle product in wishlist
+    const toggleWishlist = async (productId, e) => {
+        e.stopPropagation();
+        if (!userId) {
+            navigate('/login'); // Changed navigation to /login if not authenticated
+            return;
+        }
+        try {
+            const res = await fetch(`${IMAGE_BASE_URL}/api/products/wishlist/${userId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${storedUser.token}`
+                },
+                body: JSON.stringify({ productId }),
+            });
+            const data = await res.json();
+
+            setWishlist(prev =>
+                data.isInWishlist
+                    ? [...prev, productId]
+                    : prev.filter(id => id !== productId)
+            );
+        } catch (error) {
+            console.error("Error toggling wishlist", error);
+        }
+    };
+
     // Fetch products
     useEffect(() => {
         const fetchProducts = async () => {
             try {
                 const [newArrivalsResponse, bestSellersResponse] = await Promise.all([
-                    axios.get("https://luna-backend-1.onrender.com/api/products/new-arrivals"),
-                    axios.get("https://luna-backend-1.onrender.com/api/products/best-sellers")
+                    axios.get(`${IMAGE_BASE_URL}/api/products/new-arrivals`),
+                    axios.get(`${IMAGE_BASE_URL}/api/products/best-sellers`)
                 ]);
 
                 setNewArrivalsProducts(newArrivalsResponse.data.slice(0, 10));
@@ -73,11 +135,15 @@ const Home = () => {
         fetchProducts();
     }, []);
 
+    // Removed useEffect for recentlyViewedProducts as it's no longer used.
+
+    // Removed useEffect for authentication check as it's not present in the new code.
+
     // Fetch categories
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await axios.get("https://luna-backend-1.onrender.com/api/products/categories");
+                const response = await axios.get(`${IMAGE_BASE_URL}/api/products/categories`);
                 setCategories(response.data);
             } catch (error) {
                 console.error("Error fetching categories:", error);
@@ -102,7 +168,7 @@ const Home = () => {
     };
 
     const handleCategoryClick = (categoryName) => {
-        navigate(`/usercategory/${categoryName}`);
+        navigate(`/usercategory/${categoryName}`); // Changed navigation path
     };
 
     // Add to cart handler
@@ -163,7 +229,7 @@ const Home = () => {
             >
                 <div style={{ position: "relative" }}>
                     <img
-                        src={product.images?.[0] || "fallback.png"}
+                        src={getFullImageUrl(product.images?.[0])} // Applied getFullImageUrl
                         className="card-img img-fluid"
                         alt={product.name}
                         style={{ height: "200px", objectFit: "cover" }}
@@ -176,6 +242,7 @@ const Home = () => {
                             zIndex: 10,
                             cursor: "pointer",
                         }}
+                        onClick={(e) => toggleWishlist(product._id, e)}
                     >
                         <i
                             className={`fa-heart fa-2xl ${isInWishlist ? "fa-solid" : "fa-regular"}`}
@@ -204,12 +271,12 @@ const Home = () => {
 
     return (
         <>
-            <UserNavbar />
+            <UserNavbar /> {/* Changed component name */}
             <div className="container d-flex justify-content-center">
                 {banners.length > 0 && (
                     <div className="card text-bg-dark position-relative w-100 overflow-hidden" style={{ height: '600px' }}>
                         <img
-                            src={`https://luna-backend-1.onrender.com${banners[currentImageIndex]}`}
+                            src={getFullImageUrl(banners[currentImageIndex])} // Applied getFullImageUrl to banners
                             className="img-fluid w-100 h-100 position-absolute top-0 start-0"
                             alt="Banner"
                             style={{
@@ -237,7 +304,7 @@ const Home = () => {
                                 Level up Your Style With Our Summer Collections
                             </h1>
                             <br />
-                            <button onClick={() => navigate('/login')} className="btn btn-light btn-lg">
+                            <button onClick={() => navigate('/login')} className="btn btn-light btn-lg"> {/* Changed navigation path */}
                                 Login To Shop Now
                             </button>
                         </div>
@@ -249,6 +316,8 @@ const Home = () => {
 
             {step === 1 && (
                 <>
+                    {/* Removed Recently viewed products section */}
+
                     {/* Category Section */}
                     <div className="container">
                         <div className="row align-items-center text-center text-md-start">
@@ -257,68 +326,68 @@ const Home = () => {
                                 <h2 style={{ color: "#000" }}>Categories</h2>
                             </div>
                         </div>
-                    </div>
 
-                    <br /><br />
+                        <br /><br />
 
-                    <div className="position-relative">
-                        <button
-                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                            onClick={() => scrollLeft('categories-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-left"></i>
-                        </button>
-                        <div
-                            id="categories-section"
-                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                        >
-                            {categories.map((category, index) => (
-                                <div
-                                    key={index}
-                                    className="card bg-dark text-white shadow-sm overflow-hidden flex-shrink-0 mx-3 position-relative"
-                                    style={{
-                                        width: "16rem",
-                                        height: "11rem",
-                                        scrollSnapAlign: "center",
-                                        cursor: "pointer",
-                                        borderRadius: "1rem",
-                                        transition: "transform 0.3s",
-                                        overflow: "hidden",
-                                    }}
-                                    onClick={() => handleCategoryClick(category.categoryName)}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = "scale(1.05)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = "scale(1)";
-                                    }}
-                                >
-                                    <img
-                                        src={category.imageUrl}
-                                        className="w-100 h-100"
-                                        alt={`${category.categoryName} Image`}
+                        <div className="position-relative">
+                            <button
+                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
+                                onClick={() => scrollLeft('categories-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div
+                                id="categories-section"
+                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                            >
+                                {categories.map((category, index) => (
+                                    <div
+                                        key={index}
+                                        className="card bg-dark text-white shadow-sm overflow-hidden flex-shrink-0 mx-3 position-relative"
                                         style={{
-                                            objectFit: "cover",
-                                            filter: "brightness(60%)",
+                                            width: "16rem",
+                                            height: "11rem",
+                                            scrollSnapAlign: "center",
+                                            cursor: "pointer",
+                                            borderRadius: "1rem",
+                                            transition: "transform 0.3s",
+                                            overflow: "hidden",
                                         }}
-                                    />
-                                    <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center">
-                                        <h5 className="fw-bold text-white mb-2" style={{ textShadow: "1px 1px 5px rgba(0,0,0,0.7)" }}>
-                                            {category.categoryName}
-                                        </h5>
+                                        onClick={() => handleCategoryClick(category.categoryName)}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = "scale(1.05)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = "scale(1)";
+                                        }}
+                                    >
+                                        <img
+                                            src={getFullImageUrl(category.imageUrl)} // Applied getFullImageUrl
+                                            className="w-100 h-100"
+                                            alt={`${category.categoryName} Image`}
+                                            style={{
+                                                objectFit: "cover",
+                                                filter: "brightness(60%)",
+                                            }}
+                                        />
+                                        <div className="card-img-overlay d-flex flex-column justify-content-center align-items-center text-center">
+                                            <h5 className="fw-bold text-white mb-2" style={{ textShadow: "1px 1px 5px rgba(0,0,0,0.7)" }}>
+                                                {category.categoryName}
+                                            </h5>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                            <button
+                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
+                                onClick={() => scrollRight('categories-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <button
-                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                            onClick={() => scrollRight('categories-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-right"></i>
-                        </button>
                     </div>
 
                     <br />
@@ -331,31 +400,31 @@ const Home = () => {
                                 <h2 style={{ color: "#000" }}>Best Sellers</h2>
                             </div>
                         </div>
-                    </div>
-                    <br /><br />
+                        <br /><br />
 
-                    <div className="position-relative">
-                        <button
-                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                            onClick={() => scrollLeft('best-sellers-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-left"></i>
-                        </button>
-                        <div
-                            id="best-sellers-section"
-                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                        >
-                            {mostWantedProducts.map(renderProductCard)}
+                        <div className="position-relative">
+                            <button
+                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
+                                onClick={() => scrollLeft('best-sellers-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div
+                                id="best-sellers-section"
+                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                            >
+                                {mostWantedProducts.map(renderProductCard)}
+                            </div>
+                            <button
+                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
+                                onClick={() => scrollRight('best-sellers-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <button
-                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                            onClick={() => scrollRight('best-sellers-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-right"></i>
-                        </button>
                     </div>
 
                     <br />
@@ -368,37 +437,37 @@ const Home = () => {
                                 <h2 style={{ color: "#000" }}>New Arrivals</h2>
                             </div>
                         </div>
-                    </div>
-                    <br /><br />
+                        <br /><br />
 
-                    <div className="position-relative">
-                        <button
-                            className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
-                            onClick={() => scrollLeft('new-arrivals-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-left"></i>
-                        </button>
-                        <div
-                            id="new-arrivals-section"
-                            className="d-flex overflow-auto py-2 mx-5 custom-scroll"
-                            style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
-                        >
-                            {newArrivalsProducts.map(renderProductCard)}
+                        <div className="position-relative">
+                            <button
+                                className="position-absolute start-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 ms-3"
+                                onClick={() => scrollLeft('new-arrivals-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div
+                                id="new-arrivals-section"
+                                className="d-flex overflow-auto py-2 mx-5 custom-scroll"
+                                style={{ gap: "1rem", scrollSnapType: "x mandatory" }}
+                            >
+                                {newArrivalsProducts.map(renderProductCard)}
+                            </div>
+                            <button
+                                className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
+                                onClick={() => scrollRight('new-arrivals-section')}
+                                style={{ width: '40px', height: '40px' }}
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <button
-                            className="position-absolute end-0 top-50 translate-middle-y btn btn-dark rounded-circle z-1 me-3"
-                            onClick={() => scrollRight('new-arrivals-section')}
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <i className="fas fa-chevron-right"></i>
-                        </button>
                     </div>
                 </>
             )}
 
             {step === 2 && (
-                <UserProductDetails
+                <UserProductDetails // Changed component name
                     selectedItem={selectedItem}
                     quantity={quantity}
                     quantityDec={quantityDec}
@@ -408,9 +477,9 @@ const Home = () => {
                 />
             )}
 
-            <UserFooter />
+            <UserFooter /> {/* Changed component name */}
         </>
     );
 }
 
-export default Home;
+export default Home; // Changed export name
