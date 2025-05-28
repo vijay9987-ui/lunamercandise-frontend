@@ -46,7 +46,7 @@ const Profile = () => {
             return imagePath;
         }
         // Prepend the base URL for relative paths
-        return `http://194.164.148.244:4066${imagePath}`;
+        return `https://luna-backend-1.onrender.com${imagePath}`;
     };
 
     const navigate = useNavigate();
@@ -83,7 +83,7 @@ const Profile = () => {
     const fetchCartData = async () => {
         try {
             setCartData(prev => ({ ...prev, loading: true, error: null }));
-            const response = await axios.get(`http://194.164.148.244:4066/api/users/getcart/${userId}`);
+            const response = await axios.get(`https://luna-backend-1.onrender.com/api/users/getcart/${userId}`);
 
             setCartData({
                 cartItems: response.data.cartItems || [],
@@ -115,7 +115,7 @@ const Profile = () => {
         try {
             setCartData(prev => ({ ...prev, loading: true }));
             await axios.post(
-                `http://194.164.148.244:4066/api/users/addtocart/${userId}`,
+                `https://luna-backend-1.onrender.com/api/users/addtocart/${userId}`,
                 { productId, action }
             );
             await fetchCartData(); // Refresh cart data
@@ -134,7 +134,7 @@ const Profile = () => {
         try {
             setCartData(prev => ({ ...prev, loading: true }));
             await axios.delete(
-                `http://194.164.148.244:4066/api/users/removefromcart/${userId}/${productId}`
+                `https://luna-backend-1.onrender.com/api/users/removefromcart/${userId}/${productId}`
             );
             await fetchCartData(); // Refresh cart data
         } catch (error) {
@@ -162,7 +162,7 @@ const Profile = () => {
         const userId = storedUser.userId;
 
         if (userId) {
-            axios.get(`http://194.164.148.244:4066/api/users/getuser/${userId}`)
+            axios.get(`https://luna-backend-1.onrender.com/api/users/getuser/${userId}`)
                 .then(res => {
                     const { profile, mobileNumber, email } = res.data;
                     setFormData({
@@ -194,7 +194,7 @@ const Profile = () => {
         const userId = storedUser.userId;
 
         try {
-            const res = await axios.post(`http://194.164.148.244:4066/api/users/user/createprofiledata/${userId}`, {
+            const res = await axios.post(`https://luna-backend-1.onrender.com/api/users/user/createprofiledata/${userId}`, {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 gender: formData.gender,
@@ -225,7 +225,7 @@ const Profile = () => {
         const userId = storedUser.userId;
 
         try {
-            const res = await axios.post(`http://194.164.148.244:4066/api/users/create-address/${userId}`, address);
+            const res = await axios.post(`https://luna-backend-1.onrender.com/api/users/create-address/${userId}`, address);
             setAddresses(res.data.addresses);
             setAddress({
                 name: "", mobile: "", email: "", addressline1: "", addressline2: "",
@@ -242,7 +242,7 @@ const Profile = () => {
         const addr = addresses[index];
 
         try {
-            const res = await axios.delete(`http://194.164.148.244:4066/api/users/remove-address/${userId}/${addr._id}`);
+            const res = await axios.delete(`https://luna-backend-1.onrender.com/api/users/remove-address/${userId}/${addr._id}`);
             setAddresses(res.data.addresses);
             if (selectedAddress?._id === addr._id) setSelectedAddress(null);
         } catch (err) {
@@ -260,7 +260,7 @@ const Profile = () => {
             try {
                 const savedUser = JSON.parse(sessionStorage.getItem("user")) || {};
                 const userId = savedUser.userId; // Or however you're storing user ID
-                const res = await axios.get(`http://194.164.148.244:4066/api/users/getaddress/${userId}`);
+                const res = await axios.get(`https://luna-backend-1.onrender.com/api/users/getaddress/${userId}`);
                 setAddresses(res.data.addresses); // ✅ Fix: directly access 'addresses' from response
             } catch (err) {
                 console.error("Error fetching addresses:", err);
@@ -275,7 +275,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchWishlist = async () => {
             try {
-                const res = await fetch(`http://194.164.148.244:4066/api/users/wishlist/${userId}`);
+                const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`);
                 const data = await res.json();
                 //console.log("Fetched wishlist data:", data);
 
@@ -284,7 +284,7 @@ const Profile = () => {
 
                 const productResponses = await Promise.all(
                     wishlistIds.map(_id =>
-                        fetch(`http://194.164.148.244:4066/api/products/singleproduct/${_id}`)
+                        fetch(`https://luna-backend-1.onrender.com/api/products/singleproduct/${_id}`)
                             .then(res => res.json())
                             .catch(err => {
                                 console.error("Failed to fetch product:", _id, err);
@@ -311,7 +311,7 @@ const Profile = () => {
         if (!confirmDelete) return;
 
         try {
-            const res = await fetch(`http://194.164.148.244:4066/api/users/wishlist/${userId}/${productId}`, {
+            const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}/${productId}`, {
                 method: 'DELETE',
             });
 
@@ -376,7 +376,7 @@ const Profile = () => {
             setOrdersLoading(true);
             setOrdersError(null);
             const response = await axios.get(
-                `http://194.164.148.244:4066/api/users/myorders/${userId}`
+                `https://luna-backend-1.onrender.com/api/users/myorders/${userId}`
             );
             setOrders(response.data.orders || []);
         } catch (error) {
@@ -398,7 +398,7 @@ const Profile = () => {
             }));
 
             const response = await axios.get(
-                `http://194.164.148.244:4066/api/users/trackstatus/${userId}/${orderId}`
+                `https://luna-backend-1.onrender.com/api/users/trackstatus/${userId}/${orderId}`
             );
 
             setTrackingData(prev => ({
@@ -480,7 +480,7 @@ const Profile = () => {
     useEffect(() => {
         if (userId) {
             console.log("Fetching profile for userId:", userId);
-            axios.get(`http://194.164.148.244:4066/api/users/profile/${userId}`)
+            axios.get(`https://luna-backend-1.onrender.com/api/users/profile/${userId}`)
                 .then((res) => {
                     console.log("User profile data:", res.data);
                     const userData = res.data || {};
@@ -512,7 +512,7 @@ const Profile = () => {
             setIsUploading(true);
 
             const res = await axios.post(
-                `http://194.164.148.244:4066/api/users/uploadprofile/${userId}`,
+                `https://luna-backend-1.onrender.com/api/users/uploadprofile/${userId}`,
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
@@ -547,7 +547,7 @@ const Profile = () => {
         if (image.startsWith("http")) {
             return image;
         } else if (image.startsWith("/uploads/")) {
-            return `http://194.164.148.244:4066${image}`;
+            return `https://luna-backend-1.onrender.com${image}`;
         } else {
             return image;
         }
@@ -565,7 +565,7 @@ const Profile = () => {
 
     const confirmCancelOrder = async () => {
         try {
-            const response = await axios.post(`http://194.164.148.244:4066/api/users/cancelorder/${userId}/${orderToCancel}`, {
+            const response = await axios.post(`https://luna-backend-1.onrender.com/api/users/cancelorder/${userId}/${orderToCancel}`, {
                 cancellationReason
             });
 

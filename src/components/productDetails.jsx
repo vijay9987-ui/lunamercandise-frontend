@@ -24,7 +24,7 @@ const ProductDetails = ({
     const userId = storedUser.userId;
 
     // Base URL for images
-    const IMAGE_BASE_URL = 'http://194.164.148.244:4066';
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
 
     // Helper function to get the full image URL
     const getFullImageUrl = (imagePath) => {
@@ -56,7 +56,7 @@ const ProductDetails = ({
 
             try {
                 const res = await axios.get(
-                    `http://194.164.148.244:4066/api/users/wishlist/${userId}`
+                    `https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`
                 );
                 setIsInWishlist(res.data.wishlist?.some(item => item._id === selectedItem._id));
             } catch (error) {
@@ -70,7 +70,7 @@ const ProductDetails = ({
         const markAsRecentlyViewed = async () => {
             try {
                 await axios.post(
-                    `http://194.164.148.244:4066/api/products/recently-viewed/${userId}`,
+                    `https://luna-backend-1.onrender.com/api/products/recently-viewed/${userId}`,
                     { productId: selectedItem._id },
                     {
                         headers: {
@@ -109,7 +109,7 @@ const ProductDetails = ({
 
         try {
             const response = await axios.post(
-                `http://194.164.148.244:4066/api/users/addtocart/${userId}`,
+                `https://luna-backend-1.onrender.com/api/users/addtocart/${userId}`,
                 {
                     productId: selectedItem._id,
                     action: "increment",
@@ -159,7 +159,7 @@ const ProductDetails = ({
 
         try {
             const response = await axios.post(
-                `http://194.164.148.244:4066/api/users/addtocart/${userId}`,
+                `https://luna-backend-1.onrender.com/api/users/addtocart/${userId}`,
                 {
                     productId: selectedItem._id,
                     action: "increment",
@@ -186,7 +186,7 @@ const ProductDetails = ({
 
         try {
             const response = await axios.post(
-                `http://194.164.148.244:4066/api/products/wishlist/${userId}`,
+                `https://luna-backend-1.onrender.com/api/products/wishlist/${userId}`,
                 { productId: selectedItem._id },
                 {
                     headers: {

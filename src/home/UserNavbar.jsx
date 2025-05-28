@@ -15,7 +15,7 @@ function UserNavbar() {
   useEffect(() => {
     const fetchCartCount = async () => {
       try {
-        const response = await axios.get(`http://194.164.148.244:4066/api/users/getcartcount/${userId}`);
+        const response = await axios.get(`https://luna-backend-1.onrender.com/api/users/getcartcount/${userId}`);
         setCartCount(response.data.cartCount);
       } catch (error) {
         console.error("Error fetching cart count:", error);

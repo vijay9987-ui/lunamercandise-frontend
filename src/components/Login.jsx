@@ -59,7 +59,7 @@ const Login = () => {
         }
 
         try {
-            const response = await fetch("http://194.164.148.244:4066/api/users/login", {
+            const response = await fetch("https://luna-backend-1.onrender.com/api/users/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ identifier: mobileNumber, password })
@@ -123,7 +123,7 @@ const Login = () => {
         }
 
         try {
-            const response = await fetch("http://194.164.148.244:4066/api/users/register", {
+            const response = await fetch("https://luna-backend-1.onrender.com/api/users/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

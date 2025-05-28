@@ -28,7 +28,7 @@ const Dashboard = () => {
     const [images, setImages] = useState([]);
 
     // Base URL for images
-    const IMAGE_BASE_URL = 'http://194.164.148.244:4066';
+    const IMAGE_BASE_URL = 'https://luna-backend-1.onrender.com';
 
     // Helper function to get the full image URL
     const getFullImageUrl = (imagePath) => {

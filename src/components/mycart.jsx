@@ -42,7 +42,7 @@ const MyCart = () => {
             return imagePath;
         }
         // Prepend the base URL for relative paths
-        return `http://194.164.148.244:4066${imagePath}`;
+        return `https://luna-backend-1.onrender.com${imagePath}`;
     };
 
     const [cartData, setCartData] = useState({
@@ -66,7 +66,7 @@ const MyCart = () => {
             if (!userId) return;
 
             setCartData(prev => ({ ...prev, loading: true, error: null }));
-            const response = await axios.get(`http://194.164.148.244:4066/api/users/getcart/${userId}`);
+            const response = await axios.get(`https://luna-backend-1.onrender.com/api/users/getcart/${userId}`);
 
             setCartData({
                 cartItems: response.data.cartItems || [],
@@ -95,7 +95,7 @@ const MyCart = () => {
         if (!userId) return;
 
         try {
-            const response = await axios.get(`http://194.164.148.244:4066/api/users/getaddress/${userId}`);
+            const response = await axios.get(`https://luna-backend-1.onrender.com/api/users/getaddress/${userId}`);
             setAddresses(response.data.addresses || []);
         } catch (err) {
             console.error("Error fetching addresses:", err);
@@ -135,7 +135,7 @@ const MyCart = () => {
 
             setCartData(prev => ({ ...prev, loading: true }));
             await axios.post(
-                `http://194.164.148.244:4066/api/users/addtocart/${userId}`,
+                `https://luna-backend-1.onrender.com/api/users/addtocart/${userId}`,
                 { productId, action }
             );
             await fetchCart();
@@ -156,7 +156,7 @@ const MyCart = () => {
 
             setCartData(prev => ({ ...prev, loading: true }));
             await axios.delete(
-                `http://194.164.148.244:4066/api/users/removefromcart/${userId}/${productId}`
+                `https://luna-backend-1.onrender.com/api/users/removefromcart/${userId}/${productId}`
             );
             await fetchCart();
         } catch (error) {
@@ -183,7 +183,7 @@ const MyCart = () => {
 
             for (const productId of selectedItems) {
                 await axios.delete(
-                    `http://194.164.148.244:4066/api/users/removefromcart/${userId}/${productId}`
+                    `https://luna-backend-1.onrender.com/api/users/removefromcart/${userId}/${productId}`
                 );
             }
 
@@ -263,7 +263,7 @@ const MyCart = () => {
             console.log("Sending checkout data:", checkoutData);
 
             const response = await axios.post(
-                `http://194.164.148.244:4066/api/users/create-order/${userId}`,
+                `https://luna-backend-1.onrender.com/api/users/create-order/${userId}`,
                 checkoutData,
                 {
                     headers: {
@@ -310,7 +310,7 @@ const MyCart = () => {
         if (!userId) return;
 
         try {
-            await axios.post(`http://194.164.148.244:4066/api/users/create-address/${userId}`, address);
+            await axios.post(`https://luna-backend-1.onrender.com/api/users/create-address/${userId}`, address);
             await fetchAddresses();
             setShowAddressForm(false);
             setAddress({
@@ -328,7 +328,7 @@ const MyCart = () => {
         if (!userId) return;
 
         try {
-            await axios.delete(`http://194.164.148.244:4066/api/users/remove-address/${userId}/${addressId}`);
+            await axios.delete(`https://luna-backend-1.onrender.com/api/users/remove-address/${userId}/${addressId}`);
             await fetchAddresses();
             if (selectedAddress?._id === addressId) {
                 setSelectedAddress(null);
