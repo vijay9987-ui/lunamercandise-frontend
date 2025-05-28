@@ -33,7 +33,7 @@ const CategoryPage = () => {
         const fetchWishlist = async () => {
             if (!userId) return;
             try {
-                const res = await fetch(`https://luna-backend-1.onrender.com/api/users/wishlist/${userId}`);
+                const res = await fetch(`http://194.164.148.244:4066/api/users/wishlist/${userId}`);
                 const data = await res.json();
                 if (data.wishlist) {
                     setWishlist(data.wishlist.map(item => item._id));
@@ -53,7 +53,7 @@ const CategoryPage = () => {
             return;
         }
         try {
-            const res = await fetch(`https://luna-backend-1.onrender.com/api/products/wishlist/${userId}`, {
+            const res = await fetch(`http://194.164.148.244:4066/api/products/wishlist/${userId}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -77,7 +77,7 @@ const CategoryPage = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `https://luna-backend-1.onrender.com/api/products/category/${categoryName}`
+                    `http://194.164.148.244:4066/api/products/category/${categoryName}`
                 );
 
                 if (response.data && response.data.length > 0) {

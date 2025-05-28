@@ -33,7 +33,7 @@ const UserCategory = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `https://luna-backend-1.onrender.com/api/products/category/${categoryName}`
+                    `http://194.164.148.244:4066/api/products/category/${categoryName}`
                 );
 
                 if (response.data && response.data.length > 0) {

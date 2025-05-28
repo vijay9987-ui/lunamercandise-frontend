@@ -12,7 +12,7 @@ export const CartProvider = ({ children }) => {
   const fetchCartCount = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(`https://luna-backend-1.onrender.com/api/users/getcartcount/${userId}`);
+      const res = await axios.get(`http://194.164.148.244:4066/api/users/getcartcount/${userId}`);
       setCartCount(res.data.cartCount);
     } catch (err) {
       console.error("Failed to fetch cart count", err);
