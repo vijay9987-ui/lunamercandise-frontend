@@ -477,11 +477,12 @@ const Profile = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [sessionUser, setSessionUser] = useState({});
 
-    // Load user data
     useEffect(() => {
         if (userId) {
+            console.log("Fetching profile for userId:", userId);
             axios.get(`https://luna-backend-1.onrender.com/api/users/profile/${userId}`)
                 .then((res) => {
+                    console.log("User profile data:", res.data);
                     const userData = res.data || {};
                     if (!userData.profileImage) {
                         userData.profileImage = "/default-profile.png";
@@ -497,6 +498,7 @@ const Profile = () => {
                 });
         }
     }, [userId]);
+
 
     // Handle profile image change
     const handleProfileImageChange = async (e) => {
@@ -537,12 +539,10 @@ const Profile = () => {
             setIsUploading(false);
         }
     };
-
-    // Get proper profile image URL
     const getProfileImageUrl = () => {
         const image = sessionUser?.profileImage;
 
-        if (!image) return "/default-profile.png";
+        if (typeof image !== "string" || !image) return "/default-profile.png";
 
         if (image.startsWith("http")) {
             return image;
